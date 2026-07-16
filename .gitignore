@@ -1,0 +1,16 @@
+# Exported personal save files
+milkglass-desk-*.json
+backups/
+saves/
+
+# Never commit server-side secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
