@@ -27,7 +27,7 @@ jobs:
       - name: Prepare public files
         run: |
           mkdir -p _site
-          cp index.html config.js .nojekyll _site/
+          cp index.html daily.html config.js .nojekyll _site/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4

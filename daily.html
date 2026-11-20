@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#eeeeee" />
+  <title>Milkglass Desk</title>
+  <style>
+    :root{
+      --bg:#f4f4f4;
+      --paper:#fdfdfd;
+      --paper-2:#fafafa;
+      --ink:#404040;
+      --line:#dcdcdc;
+      --highlight:#dcdcdc;
+      --completed-surface:#e1e1e1;
+      --completed-ink:#a1a1a1;
+      --alternate-surface:#dbdbdb;
+      --stat-surface:#d5d5d5;
+      --rewards-surface:#e9e9e9;
+      --glass:rgba(255,255,255,.72);
+      --shadow:0 18px 44px rgba(97,97,97,.13);
+      --soft-shadow:0 8px 20px rgba(97,97,97,.10);
+      --r-xl:24px;
+      --r-lg:18px;
+      --r-md:13px;
+      --font:"Yu Gothic UI","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0; width:100%; min-height:100%; font-family:var(--font); color:var(--ink)}
+    body{
+      min-height:100vh;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 12% 14%, rgba(255,255,255,.98) 0 7%, transparent 28%),
+        radial-gradient(circle at 90% 18%, rgba(220,220,220,.42) 0 8%, transparent 30%),
+        radial-gradient(circle at 82% 82%, rgba(225,225,225,.42) 0 10%, transparent 33%),
+        linear-gradient(145deg,#f7f7f7,#eeeeee);
+    }
+
+    body::before{
+      content:"";
+      position:fixed; inset:0; pointer-events:none;
+      background:
+        radial-gradient(circle at 8% 88%, rgba(219,219,219,.26), transparent 20%),
+        radial-gradient(circle at 53% 9%, rgba(213,213,213,.18), transparent 16%);
+      opacity:.9;
+    }
+
+    button,input{font:inherit}
+    button{color:inherit; cursor:pointer}
+    button:disabled{opacity:.46; cursor:not-allowed}
+
+    .app{
+      width:min(1500px,calc(100% - 24px));
+      height:calc(100vh - 24px);
+      margin:12px auto;
+      position:relative;
+      z-index:1;
+      display:grid;
+      grid-template-rows:68px minmax(0,1fr);
+      gap:12px;
+    }
+
+    .topbar{
+      display:grid;
+      grid-template-columns:1fr auto auto;
+      gap:14px;
+      align-items:center;
+      padding:10px 14px;
+      border:1px solid rgba(255,255,255,.86);
+      border-radius:20px;
+      background:rgba(252,252,252,.78);
+      box-shadow:var(--soft-shadow);
+      backdrop-filter:blur(18px);
+      overflow:hidden;
+    }
+
+    .brand{display:flex;align-items:center;gap:11px;min-width:0}
+    .brand-mark{
+      width:44px;height:44px;display:grid;place-items:center;
+      border-radius:15px;
+      border:1px solid rgba(255,255,255,.95);
+      background:
+        radial-gradient(circle at 33% 24%,rgba(255,255,255,.95),transparent 24%),
+        linear-gradient(145deg,var(--highlight),var(--completed-surface));
+      box-shadow:inset 0 0 16px rgba(255,255,255,.78),0 7px 17px rgba(104,104,104,.12);
+      font-size:20px;
+    }
+    .brand h1{margin:0;font-size:19px;letter-spacing:.03em}
+    .brand-sub{font-size:10px;letter-spacing:.12em;color:#8b8b8b;font-weight:800;text-transform:uppercase}
+
+    .nav{
+      display:flex;gap:7px;padding:5px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(255,255,255,.55);
+      box-shadow:inset 0 1px 8px rgba(110,110,110,.05);
+    }
+
+    .nav-btn,.gel-btn,.mini-btn,.check,.shop-btn,.ticket-btn{
+      border:1px solid rgba(144,144,144,.22);
+      box-shadow:0 6px 13px rgba(97,97,97,.07), inset 0 1px 0 rgba(255,255,255,.8);
+      transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
+      transform-origin:center;
+    }
+
+    .nav-btn{
+      min-width:82px;padding:9px 12px;border-radius:12px;background:white;
+      font-size:10px;font-weight:900;letter-spacing:.08em;
+    }
+    .nav-btn.active{background:linear-gradient(145deg,#eaeaea,#dedede);border-color:rgba(171,171,171,.45)}
+
+    .header-stats{display:flex;align-items:center;gap:8px}
+    .stat-pill{
+      min-width:86px;padding:9px 12px;border-radius:14px;
+      border:1px solid var(--line);background:rgba(255,255,255,.72);
+      text-align:center;
+    }
+    .stat-pill span{display:block;font-size:9px;color:#838383;font-weight:800;letter-spacing:.08em}
+    .stat-pill strong{font-size:16px}
+
+    .coin-dot{
+      width:18px;height:18px;display:inline-grid;place-items:center;
+      border-radius:50%;
+      background:linear-gradient(145deg,#e6e6e6,#bebebe);
+      border:1px solid rgba(147,147,147,.28);
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.35);
+      color:#707070;font-size:9px;
+    }
+
+    .workspace{
+      position:relative;
+      min-height:0;
+      border:1px solid rgba(255,255,255,.8);
+      border-radius:24px;
+      background:rgba(251,251,251,.56);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(18px);
+      overflow:hidden;
+    }
+
+    .view{
+      position:absolute; inset:0;
+      padding:14px;
+      display:none;
+      min-height:0;
+    }
+    .view.active{display:grid}
+
+    .panel{
+      position:relative;
+      min-height:0;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.86);
+      border-radius:20px;
+      background:rgba(255,255,255,.80);
+      box-shadow:var(--soft-shadow);
+    }
+
+    .today-view{
+      grid-template-columns:230px minmax(560px,1fr) 255px;
+      gap:12px;
+    }
+
+    .side-stack{
+      display:grid;
+      grid-template-rows:auto minmax(0,1fr);
+      gap:12px;
+      min-height:0;
+    }
+
+    .stat-card{padding:14px}
+    .stat-card h2,.sheet h2,.drawer-title{margin:0;font-size:15px;letter-spacing:.03em}
+    .label{font-size:9px;font-weight:900;letter-spacing:.13em;color:#8b8b8b;text-transform:uppercase}
+
+    .level-panel{
+      display:grid;
+      grid-template-columns:56px 1fr;
+      gap:12px;
+      align-items:center;
+      margin-top:10px;
+    }
+
+    .syrup-vial{
+      position:relative;width:48px;height:136px;margin:auto;
+      border:2px solid rgba(143,143,143,.28);
+      border-radius:22px 22px 16px 16px;
+      overflow:hidden;
+      background:linear-gradient(90deg,rgba(255,255,255,.92),rgba(238,238,238,.5));
+      box-shadow:inset 7px 0 12px rgba(255,255,255,.7),inset -5px 0 10px rgba(122,122,122,.07);
+    }
+    .syrup-vial::before{
+      content:"";position:absolute;z-index:2;left:10px;top:8px;width:8px;height:90px;
+      border-radius:999px;background:linear-gradient(rgba(255,255,255,.84),rgba(255,255,255,.05));
+    }
+    .syrup{
+      position:absolute;left:0;right:0;bottom:0;height:0%;
+      background:
+        radial-gradient(circle at 35% 18%,rgba(255,255,255,.78) 0 3px,transparent 4px),
+        linear-gradient(to top,#ababab,#dcdcdc);
+      transition:height .55s ease;
+    }
+    .syrup::after{
+      content:"";position:absolute;left:-4%;top:-7px;width:108%;height:14px;border-radius:50%;
+      background:#f1f1f1;box-shadow:0 2px 8px rgba(171,171,171,.2);
+    }
+
+    .level-number{font-size:34px;font-weight:900;letter-spacing:-.05em}
+    .exp-track{
+      height:10px;border-radius:999px;background:#ececec;border:1px solid rgba(144,144,144,.11);overflow:hidden;margin:7px 0 6px;
+    }
+    .exp-track span{display:block;height:100%;width:0;background:linear-gradient(90deg,#afafaf,#cdcdcd);transition:width .45s ease}
+    .exp-readout{font-size:10px;font-weight:800;color:#7b7b7b}
+
+    .sheet{
+      padding:14px;
+      display:grid;
+      grid-template-rows:auto auto minmax(0,1fr);
+      min-height:0;
+      background:
+        linear-gradient(rgba(255,255,255,.95),rgba(252,252,252,.96)),
+        repeating-linear-gradient(to bottom,transparent 0 30px,rgba(130,130,130,.04) 30px 31px);
+    }
+
+    .sheet-top{
+      display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+      padding:2px 4px 10px;border-bottom:1px dashed rgba(130,130,130,.22);
+    }
+    .sheet-top h2{font-size:23px;letter-spacing:-.03em}
+    .life-grid{
+      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;
+      align-content:start;
+    }
+    .task{
+      position:relative;
+      display:grid;grid-template-columns:24px 1fr auto;gap:7px;align-items:center;
+      min-height:46px;padding:7px 8px;border:1px solid var(--line);border-radius:12px;background:rgba(254,254,254,.84);
+      transition:transform .16s ease,background .16s ease,border-color .16s ease;
+    }
+    .task.done{background:rgba(225,225,225,.29);border-color:rgba(161,161,161,.36)}
+    .task.disabled{opacity:.46;pointer-events:none}
+    .check{
+      width:23px;height:23px;border-radius:8px;background:white;
+    }
+    .task.done .check{background:linear-gradient(145deg,var(--completed-ink),#c2c2c2);border-color:transparent}
+    .task.done .check::after{content:"✓";color:white;font-weight:900;font-size:14px}
+    .task-name{font-size:10px;font-weight:850;line-height:1.2}
+    .task-exp{font-size:8px;font-weight:900;color:#767676;white-space:nowrap}
+    .gel-btn{
+      flex:1;min-height:38px;border-radius:13px;background:linear-gradient(145deg,#eaeaea,#dcdcdc);font-size:10px;font-weight:900
+    }
+    .right-stack{
+      display:grid;
+      grid-template-rows:1fr auto auto;
+      gap:12px;
+      min-height:0;
+    }
+
+    .capsule-panel{padding:14px;display:grid;grid-template-rows:auto minmax(0,1fr)}
+    .capsule-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;align-content:start}
+    .capsule{
+      min-height:78px;padding:10px;border-radius:18px 18px 22px 18px;
+      border:1px solid rgba(255,255,255,.9);
+      background:
+        radial-gradient(circle at 30% 20%,rgba(255,255,255,.95),transparent 22%),
+        linear-gradient(145deg,rgba(220,220,220,.9),rgba(255,255,255,.82));
+      box-shadow:inset 0 0 18px rgba(255,255,255,.72),0 8px 16px rgba(96,96,96,.10)
+    }
+    .capsule:nth-child(2){background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.95),transparent 22%),linear-gradient(145deg,rgba(219,219,219,.92),rgba(255,255,255,.84))}
+    .capsule:nth-child(3){background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.95),transparent 22%),linear-gradient(145deg,rgba(213,213,213,.92),rgba(255,255,255,.84))}
+    .capsule:nth-child(4){background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.95),transparent 22%),linear-gradient(145deg,rgba(233,233,233,.92),rgba(255,255,255,.84))}
+    .capsule span{display:block;font-size:8px;font-weight:900;letter-spacing:.1em;color:#818181}
+    .capsule strong{display:block;margin-top:7px;font-size:20px}
+
+    .save-card{padding:13px}
+    .mini-btn{
+      min-width:54px;padding:7px 10px;border-radius:10px;background:white;font-size:9px;font-weight:900
+    }
+
+    .save-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .save-row label{display:inline-grid;place-items:center}
+
+    .drawer-view{
+      grid-template-rows:auto minmax(0,1fr);
+      gap:12px;
+    }
+    .drawer-top{
+      display:flex;justify-content:space-between;align-items:center;padding:2px 4px
+    }
+    .drawer-title{font-size:18px}
+
+    .ticket-grid,.shop-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+      min-height:0;
+      align-content:center;
+    }
+
+    .ticket-card,.shop-card{
+      position:relative;min-height:190px;padding:16px;border:1px solid rgba(255,255,255,.9);border-radius:20px;
+      background:
+        radial-gradient(circle at 24% 16%,rgba(255,255,255,.96),transparent 25%),
+        linear-gradient(145deg,rgba(255,255,255,.92),rgba(243,243,243,.9));
+      box-shadow:var(--soft-shadow);
+      overflow:hidden;
+    }
+
+    .ticket-card::before,.shop-card::before{
+      content:"";position:absolute;inset:auto -20px -35px auto;width:120px;height:120px;border-radius:50%;
+      background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.85),transparent 20%),linear-gradient(145deg,var(--highlight),var(--alternate-surface));
+      opacity:.62;filter:blur(.2px)
+    }
+
+    .ticket-card:nth-child(2n)::before,.shop-card:nth-child(2n)::before{background:linear-gradient(145deg,var(--completed-surface),var(--rewards-surface))}
+    .ticket-card:nth-child(3n)::before,.shop-card:nth-child(3n)::before{background:linear-gradient(145deg,var(--stat-surface),var(--alternate-surface))}
+
+    .ticket-type{font-size:9px;font-weight:900;letter-spacing:.13em;color:#888888}
+    .ticket-card h3,.shop-card h3{margin:18px 0 7px;font-size:16px}
+    .ticket-count{font-size:38px;font-weight:900;margin:16px 0}
+    .ticket-count small{font-size:10px;color:#838383}
+    .price{display:flex;align-items:center;gap:6px;margin:16px 0;font-size:17px;font-weight:900;color:#707070}
+    .ticket-btn,.shop-btn{
+      width:100%;min-height:38px;border-radius:12px;background:white;font-size:10px;font-weight:900
+    }
+    .shop-btn{background:linear-gradient(145deg,#e7e7e7,#d5d5d5)}
+    .ticket-btn{background:linear-gradient(145deg,#ededed,#dbdbdb)}
+
+    .history-panel{
+      position:absolute;right:14px;top:82px;width:300px;max-height:calc(100% - 96px);
+      padding:13px;border-radius:18px;border:1px solid rgba(255,255,255,.9);background:rgba(253,253,253,.94);
+      box-shadow:var(--shadow);display:none;z-index:20
+    }
+    .history-panel.open{display:block}
+    .history-list{display:grid;gap:6px;max-height:360px;overflow:auto}
+    .history-item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 4px;border-bottom:1px dashed rgba(132,132,132,.18);font-size:9px}
+    .history-item time{color:#8a8a8a;white-space:nowrap}
+
+    .toast{
+      position:fixed;right:18px;bottom:18px;z-index:100;max-width:340px;
+      padding:11px 14px;border-radius:13px;background:rgba(64,64,64,.92);color:white;font-size:10px;
+      opacity:0;transform:translateY(12px);pointer-events:none;transition:.23s ease;box-shadow:var(--shadow)
+    }
+    .toast.show{opacity:1;transform:translateY(0)}
+
+    .squish{animation:squish .26s ease}
+    @keyframes squish{
+      0%{transform:scale(1)}
+      38%{transform:scale(.90,1.08)}
+      70%{transform:scale(1.05,.95)}
+      100%{transform:scale(1)}
+    }
+    button:active,.task:active,.ticket-card:active,.shop-card:active{
+      transform:scale(.96,.98)
+    }
+
+    .hidden{display:none!important}
+
+    @media(max-width:1180px){
+      .today-view{grid-template-columns:205px minmax(500px,1fr) 225px}
+      .ticket-grid,.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+
+    @media(max-width:900px){
+      body{overflow:auto}
+      .app{height:auto;min-height:100vh}
+      .workspace{min-height:1100px}
+      .today-view{grid-template-columns:1fr}
+      .view{position:relative}
+      .ticket-grid,.shop-grid{grid-template-columns:1fr 1fr}
+      .right-stack,.side-stack{grid-template-rows:auto}
+      .nav-btn{min-width:64px}
+      .topbar{grid-template-columns:1fr auto}
+      .header-stats{display:none}
+    }
+
+
+    /* Rounded glass panels */
+    :root{
+      --bg:#f5f5f5;
+      --paper:#fdfdfd;
+      --paper-2:#fafafa;
+      --ink:#414141;
+      --line:#dadada;
+      --highlight:#e2e2e2;
+      --completed-surface:#e7e7e7;
+      --completed-ink:#9f9f9f;
+      --alternate-surface:#e2e2e2;
+      --stat-surface:#e0e0e0;
+      --rewards-surface:#e9e9e9;
+      --shadow:0 22px 52px rgba(90,90,90,.14);
+      --soft-shadow:0 10px 25px rgba(90,90,90,.105);
+    }
+
+    body{
+      background:
+        radial-gradient(circle at 12% 12%,rgba(255,255,255,.98) 0 8%,transparent 30%),
+        radial-gradient(circle at 90% 18%,rgba(226,226,226,.46) 0 9%,transparent 32%),
+        radial-gradient(circle at 82% 84%,rgba(226,226,226,.42) 0 11%,transparent 34%),
+        linear-gradient(145deg,#f9f9f9,#f1f1f1);
+    }
+    body::before{
+      background:
+        radial-gradient(circle at 7% 88%,rgba(224,224,224,.28),transparent 21%),
+        radial-gradient(circle at 54% 8%,rgba(231,231,231,.30),transparent 18%);
+    }
+
+    .topbar,.workspace,.panel{border-color:rgba(255,255,255,.93)}
+    .topbar{border-radius:26px;background:rgba(252,252,252,.82)}
+    .workspace{border-radius:30px;background:rgba(249,249,249,.66)}
+    .panel{border-radius:26px;background:rgba(254,254,254,.84)}
+    .sheet{border-radius:28px}
+
+    .nav{border-radius:20px;padding:6px}
+    .nav-btn{border-radius:16px;min-width:94px;padding:10px 14px}
+    .nav-btn.active{background:linear-gradient(145deg,#eeeeee,#e4e4e4)}
+    .stat-pill{border-radius:18px;background:rgba(255,255,255,.78)}
+
+    .today-view{grid-template-columns:218px minmax(620px,1fr) 230px;gap:14px}
+
+    /* Life sheet: one large vertical line */
+    .life-grid{grid-template-columns:1fr;gap:8px}
+    .task{
+      min-height:52px;
+      grid-template-columns:32px 1fr auto;
+      gap:10px;
+      padding:9px 11px;
+      border-radius:17px;
+      background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(246,246,246,.82));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 5px 12px rgba(95,95,95,.055);
+    }
+    .task.done{background:linear-gradient(145deg,rgba(237,237,237,.96),rgba(230,230,230,.76))}
+    .check{width:29px;height:29px;border-radius:11px}
+    .task-name{font-size:12px;letter-spacing:.01em}
+    .task-exp{font-size:9px;padding:4px 7px;border-radius:999px;background:rgba(226,226,226,.42)}
+
+    /* Today capsules: one vertical row */
+    .capsule-grid{grid-template-columns:1fr;gap:9px;align-content:start}
+    .capsule{
+      min-height:58px;
+      display:grid;
+      grid-template-columns:1fr auto;
+      align-items:center;
+      padding:11px 15px;
+      border-radius:22px 28px 28px 22px;
+      background:
+        radial-gradient(circle at 14% 20%,rgba(255,255,255,.95),transparent 20%),
+        linear-gradient(145deg,rgba(230,230,230,.92),rgba(246,246,246,.86));
+      box-shadow:inset 0 0 20px rgba(255,255,255,.76),0 9px 18px rgba(90,90,90,.10);
+    }
+    .capsule:nth-child(2),.capsule:nth-child(3),.capsule:nth-child(4){
+      background:
+        radial-gradient(circle at 14% 20%,rgba(255,255,255,.95),transparent 20%),
+        linear-gradient(145deg,rgba(226,226,226,.92),rgba(239,239,239,.84));
+    }
+    .capsule span{font-size:9px}.capsule strong{margin:0;font-size:23px}
+
+    /* More plush interactions */
+    .nav-btn,.gel-btn,.mini-btn,.check,.reward-action{
+      border-radius:15px;
+      box-shadow:0 7px 15px rgba(90,90,90,.08),inset 0 2px 0 rgba(255,255,255,.92),inset 0 -2px 5px rgba(112,112,112,.05);
+    }
+    .gel-btn{min-height:44px;border-radius:17px}
+    button:hover:not(:disabled){transform:translateY(-2px) scale(1.015)}
+    button:active,.task:active,.reward-card:active,.ticket-pile:active{transform:scale(.92,1.07)}
+    .squish{animation:mochi .38s cubic-bezier(.2,.9,.25,1.15)}
+    @keyframes mochi{
+      0%{transform:scale(1)}
+      25%{transform:scale(.88,1.12)}
+      52%{transform:scale(1.09,.91)}
+      74%{transform:scale(.97,1.04)}
+      100%{transform:scale(1)}
+    }
+
+    /* Unified reward cabinet */
+    .rewards-view{grid-template-rows:auto minmax(0,1fr);gap:12px}
+    .rewards-head{display:flex;justify-content:space-between;align-items:center;padding:2px 5px}
+    .rewards-board{min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .reward-zone{
+      min-height:0;
+      padding:14px;
+      display:grid;
+      grid-template-rows:auto minmax(0,1fr);
+      background:
+        radial-gradient(circle at 10% 8%,rgba(255,255,255,.97),transparent 23%),
+        linear-gradient(145deg,rgba(252,252,252,.94),rgba(242,242,242,.82));
+    }
+    .shop-zone{background:radial-gradient(circle at 10% 8%,rgba(255,255,255,.97),transparent 23%),linear-gradient(145deg,rgba(249,249,249,.95),rgba(239,239,239,.84))}
+    .zone-head{display:flex;justify-content:space-between;align-items:center;padding:0 2px 11px;border-bottom:1px dashed rgba(131,131,131,.24)}
+    .zone-head h3{margin:2px 0 0;font-size:18px;letter-spacing:.07em}
+    .zone-seal{padding:6px 9px;border-radius:999px;background:rgba(227,227,227,.52);font-size:8px;font-weight:900;letter-spacing:.11em;color:#777777}
+    .reward-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:10px;padding-top:11px;min-height:0}
+    .reward-card{
+      min-width:0;min-height:0;
+      padding:10px;
+      display:grid;
+      grid-template-rows:auto minmax(72px,1fr) auto auto;
+      gap:6px;
+      border:1px solid rgba(199,199,199,.56);
+      border-radius:22px;
+      background:
+        radial-gradient(circle at 22% 12%,rgba(255,255,255,.98),transparent 26%),
+        linear-gradient(145deg,rgba(255,255,255,.96),rgba(241,241,241,.86));
+      box-shadow:inset 0 0 18px rgba(255,255,255,.78),0 9px 20px rgba(88,88,88,.09);
+      transition:transform .18s ease,box-shadow .18s ease;
+      overflow:hidden;
+    }
+    .reward-card:hover{transform:translateY(-3px);box-shadow:inset 0 0 20px rgba(255,255,255,.82),0 13px 25px rgba(88,88,88,.13)}
+    .reward-card.empty-card{opacity:.62}
+    .reward-meta{display:flex;justify-content:space-between;align-items:center;gap:5px;font-size:7px;font-weight:900;letter-spacing:.08em;color:#828282}
+    .reward-meta b{display:flex;align-items:center;gap:4px;color:#6a6a6a;font-size:9px}
+    .reward-card h4{margin:0;text-align:center;font-size:10px;line-height:1.2}
+    .reward-action{min-height:31px;border:1px solid rgba(157,157,157,.26);background:linear-gradient(145deg,#f0f0f0,#e5e5e5);font-size:8px;font-weight:900}
+    .buy-action{background:linear-gradient(145deg,#e6e6e6,#e8e8e8)}
+
+    .ticket-pile{position:relative;width:82px;height:66px;margin:auto;align-self:center;filter:drop-shadow(0 8px 8px rgba(83,83,83,.11))}
+    .ticket-slip,.ticket-face{
+      position:absolute;left:5px;top:8px;width:72px;height:46px;border-radius:10px 14px 14px 10px;
+      border:1px solid rgba(160,160,160,.36);
+      background:
+        radial-gradient(circle at 18% 20%,rgba(255,255,255,.96),transparent 22%),
+        linear-gradient(145deg,#efefef,#e2e2e2);
+      transform:translate(calc(var(--i,0)*2.5px),calc(var(--i,0)*-2.4px)) rotate(calc((var(--i,0) - 2)*.7deg));
+      box-shadow:inset 0 0 12px rgba(255,255,255,.72),0 3px 6px rgba(93,93,93,.08);
+    }
+    .ticket-face{z-index:12;display:grid;grid-template-columns:30px 1fr;align-items:center;padding:6px;transform:none}
+    .ticket-icon{width:27px;height:27px;display:grid;place-items:center;color:#848484}
+    .ticket-icon svg{width:25px;height:25px}
+    .pile-count{position:absolute;right:-3px;bottom:0;z-index:20;min-width:23px;height:23px;padding:0 5px;display:grid;place-items:center;border-radius:999px;background:#8b8b8b;color:white;font-size:9px;font-weight:900;box-shadow:0 5px 10px rgba(90,90,90,.20)}
+    .ticket-pile.empty{filter:none;opacity:.38}
+    .ticket-pile.empty .ticket-face{border-style:dashed;background:rgba(244,244,244,.45)}
+    .ticket-pile.empty .pile-count{background:#b8b8b8}
+
+    @media(max-width:1180px){
+      .today-view{grid-template-columns:200px minmax(540px,1fr) 210px}
+      .reward-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr))}
+    }
+    @media(max-width:900px){
+      .rewards-board{grid-template-columns:1fr}
+      .reward-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}
+    }
+
+
+
+    .task{min-height:46px;padding:7px 10px;border-radius:18px}
+    .life-grid{gap:5px}
+    .task{min-height:40px;padding:5px 9px}
+    .check{width:27px;height:27px}
+
+    /* v4: today used tickets */
+    .right-stack{grid-template-rows:auto minmax(120px,auto) auto}
+    .used-card{padding:13px;display:grid;grid-template-rows:auto minmax(0,1fr)}
+    .used-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+    .used-head h2{margin:1px 0 0;font-size:13px}
+    .used-count{min-width:26px;height:26px;display:grid;place-items:center;border-radius:999px;background:linear-gradient(145deg,#e8e8e8,#e2e2e2);font-size:10px;font-weight:950;color:#717171;box-shadow:inset 0 2px 0 rgba(255,255,255,.85)}
+    .used-ticket-list{display:grid;gap:6px;align-content:start;overflow:auto;padding-right:2px}
+    .used-empty{min-height:66px;display:grid;place-items:center;align-content:center;gap:3px;border:1px dashed rgba(166,166,166,.36);border-radius:16px;background:rgba(246,246,246,.55);color:#9c9c9c}
+    .used-empty span{font-size:18px}.used-empty b{font-size:9px;letter-spacing:.08em}
+    .used-ticket-mini{position:relative;display:grid;grid-template-columns:27px 1fr auto;align-items:center;gap:7px;min-height:39px;padding:6px 8px;border:1px solid rgba(179,179,179,.42);border-radius:12px;background:linear-gradient(145deg,#fcfcfc,#efefef);overflow:hidden}
+    .used-ticket-mini::after{content:"";position:absolute;right:-8px;bottom:-12px;width:46px;height:46px;border-radius:50%;background:rgba(199,199,199,.24)}
+    .used-icon{width:25px;height:25px;color:#858585}.used-icon svg{width:24px;height:24px}
+    .used-name{font-size:8px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .used-ticket-mini time{font-size:7px;color:#8e8e8e}
+    .used-ticket-mini b{position:absolute;right:3px;bottom:1px;z-index:2;font-size:6px;letter-spacing:.12em;color:rgba(110,110,110,.55);transform:rotate(-7deg)}
+
+    /* v4: larger unified reward cards */
+    .reward-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:14px;padding-top:13px}
+    .reward-card{padding:14px;grid-template-rows:auto minmax(94px,1fr) auto auto;border-radius:26px}
+    .reward-card h4{font-size:12px}
+    .reward-action{min-height:36px;border-radius:16px;font-size:9px}
+    .ticket-pile{width:132px;height:94px}
+    .ticket-slip,.ticket-face{left:8px;top:13px;width:112px;height:66px;border-radius:15px 20px 20px 15px}
+    .ticket-face{grid-template-columns:43px 1fr;padding:9px}
+    .ticket-icon{width:38px;height:38px}.ticket-icon svg{width:35px;height:35px}
+    .pile-count{right:0;bottom:0;min-width:29px;height:29px;font-size:10px}
+
+    /* v4: designed ticket-use dialog */
+    .ticket-modal{position:fixed;inset:0;z-index:200;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .22s ease}
+    .ticket-modal.open{opacity:1;pointer-events:auto}
+    .modal-scrim{position:absolute;inset:0;background:rgba(77,77,77,.30);backdrop-filter:blur(8px)}
+    .ticket-dialog{position:relative;width:min(430px,calc(100% - 28px));padding:25px 25px 22px;border:1px solid rgba(255,255,255,.94);border-radius:34px;background:radial-gradient(circle at 18% 8%,rgba(255,255,255,.99),transparent 30%),linear-gradient(145deg,#fcfcfc,#f0f0f0);box-shadow:0 30px 80px rgba(72,72,72,.26),inset 0 2px 0 rgba(255,255,255,.95);text-align:center;overflow:hidden;transform:translateY(18px) scale(.92);transition:transform .28s cubic-bezier(.2,.9,.25,1.15)}
+    .ticket-modal.open .ticket-dialog{transform:translateY(0) scale(1)}
+    .ticket-dialog h2{margin:4px 0 5px;font-size:20px}
+    .modal-close{position:absolute;right:14px;top:13px;width:34px;height:34px;border:1px solid rgba(168,168,168,.27);border-radius:50%;background:rgba(255,255,255,.74);font-size:17px;font-weight:900}
+    .modal-ticket-stage{min-height:126px;display:grid;place-items:center;margin:9px 0 3px;border-radius:25px;background:radial-gradient(circle at center,rgba(229,229,229,.43),transparent 62%)}
+    .modal-ticket-stage .ticket-pile{transform:scale(1.28)}
+    .modal-owned{font-size:10px;font-weight:800;color:#7a7a7a;margin:6px 0 16px}
+    .modal-owned strong{font-size:15px;color:#686868}
+    .modal-actions{display:grid;grid-template-columns:1fr 1.25fr;gap:9px}
+    .modal-cancel,.modal-confirm{min-height:43px;border:1px solid rgba(161,161,161,.28);border-radius:18px;font-size:10px;font-weight:950;box-shadow:0 8px 17px rgba(90,90,90,.09),inset 0 2px 0 rgba(255,255,255,.9)}
+    .modal-cancel{background:rgba(255,255,255,.80)}
+    .modal-confirm{background:linear-gradient(145deg,#eaeaea,#e0e0e0);color:#656565}
+    .used-stamp{position:absolute;left:50%;top:48%;z-index:10;padding:8px 14px;border:4px double rgba(108,108,108,.68);border-radius:9px;color:rgba(108,108,108,.78);font-size:26px;font-weight:1000;letter-spacing:.12em;transform:translate(-50%,-50%) rotate(-12deg) scale(2.4);opacity:0}
+    .bubble-burst{position:absolute;left:50%;top:47%;width:20px;height:20px;pointer-events:none}
+    .bubble-burst i{position:absolute;width:10px;height:10px;border-radius:50%;background:linear-gradient(145deg,#dddddd,#dedede);opacity:0;--x:0px;--y:0px}
+    .bubble-burst i:nth-child(1){--x:95px;--y:-50px}.bubble-burst i:nth-child(2){--x:-90px;--y:-58px}.bubble-burst i:nth-child(3){--x:110px;--y:35px}.bubble-burst i:nth-child(4){--x:-105px;--y:33px}.bubble-burst i:nth-child(5){--x:52px;--y:78px}.bubble-burst i:nth-child(6){--x:-48px;--y:82px}.bubble-burst i:nth-child(7){--x:28px;--y:-88px}.bubble-burst i:nth-child(8){--x:-25px;--y:-92px}
+    .ticket-dialog.using .modal-ticket-stage{animation:stagePulse .78s ease}
+    .ticket-dialog.using .modal-ticket-stage .ticket-pile{animation:ticketConsume .82s cubic-bezier(.25,.8,.35,1) forwards}
+    .ticket-dialog.using .used-stamp{animation:stampIn .64s .12s cubic-bezier(.15,1.25,.3,1) forwards}
+    .ticket-dialog.using .bubble-burst i{animation:bubblePop .72s .24s ease-out forwards}
+    @keyframes stagePulse{45%{transform:scale(1.06);filter:brightness(1.08)}100%{transform:scale(1)}}
+    @keyframes ticketConsume{0%{transform:scale(1.28) rotate(0);opacity:1}42%{transform:scale(1.38,.98) rotate(-2deg)}72%{transform:scale(.88,1.14) rotate(5deg);opacity:1}100%{transform:scale(.18) rotate(18deg);opacity:0;filter:blur(4px)}}
+    @keyframes stampIn{0%{opacity:0;transform:translate(-50%,-50%) rotate(-12deg) scale(2.4)}58%{opacity:1;transform:translate(-50%,-50%) rotate(-12deg) scale(.82)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-12deg) scale(1)}}
+    @keyframes bubblePop{0%{opacity:0;transform:translate(0,0) scale(.4)}25%{opacity:.95}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(1.6)}}
+
+    @media(max-width:1180px){
+      .reward-grid{gap:9px}
+      .reward-card{padding:10px}
+      .ticket-pile{transform:scale(.88)}
+    }
+
+
+
+    /* Purchase animation and viewport sizing */
+    html{min-height:100%;overflow-y:auto}
+    body{min-height:100%;overflow-y:auto;overflow-x:hidden}
+    .app{
+      height:auto;
+      min-height:max(742px,calc(100dvh - 24px));
+      grid-template-rows:68px minmax(650px,1fr);
+    }
+    .workspace{min-height:650px}
+    .view{overflow:auto;scrollbar-gutter:stable;overscroll-behavior:contain}
+    .panel,.sheet,.reward-zone{min-height:0}
+    .purchase-stamp{position:absolute;left:50%;top:48%;z-index:10;padding:8px 14px;border:4px double rgba(122,122,122,.62);border-radius:12px;color:rgba(122,122,122,.82);font-size:25px;font-weight:1000;letter-spacing:.12em;transform:translate(-50%,-50%) rotate(-8deg) scale(2.4);opacity:0}
+    .purchase-dialog.purchasing .modal-ticket-stage{animation:purchaseStage 1s ease}
+    .purchase-dialog.purchasing .modal-ticket-stage .ticket-pile{animation:ticketAcquire .9s cubic-bezier(.18,.86,.28,1) forwards}
+    .purchase-dialog.purchasing .purchase-stamp{animation:getStamp .68s .16s cubic-bezier(.15,1.25,.3,1) forwards}
+    .purchase-dialog.purchasing .bubble-burst i{animation:bubblePop .76s .24s ease-out forwards}
+    @keyframes purchaseStage{0%{transform:scale(1)}42%{transform:scale(1.07);filter:brightness(1.1)}100%{transform:scale(1)}}
+    @keyframes ticketAcquire{0%{transform:scale(1.28) translateY(0);opacity:1}38%{transform:scale(1.42,.96) translateY(-5px)}72%{transform:scale(.86,1.12) translateY(12px);opacity:1}100%{transform:scale(.36) translate(72px,-52px) rotate(12deg);opacity:0;filter:blur(2px)}}
+    @keyframes getStamp{0%{opacity:0;transform:translate(-50%,-50%) rotate(-8deg) scale(2.4)}58%{opacity:1;transform:translate(-50%,-50%) rotate(-8deg) scale(.84)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-8deg) scale(1)}}
+
+    @media(max-height:820px) and (min-width:901px){
+      .app{min-height:742px}
+      .view{padding-bottom:18px}
+    }
+    @media(max-width:900px){
+      .app{height:auto;min-height:0;grid-template-rows:auto auto}
+      .workspace{min-height:0;overflow:visible}
+      .view{position:relative;inset:auto;overflow:visible}
+      .view.active{display:grid}
+      .today-view{grid-template-columns:1fr}
+    }
+
+
+    /* v6: tablet-safe Rewards layout and simple English UI */
+    :root{
+      --font:"Avenir Next","Segoe UI","Helvetica Neue",Arial,sans-serif;
+    }
+
+    .brand h1,.sheet-top h2,.drawer-title,.zone-head h3{
+      letter-spacing:.015em;
+    }
+
+    .label,.brand-sub,.zone-seal,.ticket-type,.reward-meta{
+      letter-spacing:.09em;
+    }
+
+    .rewards-view{
+      overflow:hidden;
+      grid-template-rows:auto minmax(0,1fr);
+    }
+
+    .rewards-board{
+      min-height:0;
+      overflow:hidden;
+    }
+
+    .reward-zone{
+      min-width:0;
+      min-height:0;
+      overflow:hidden;
+      padding:12px;
+    }
+
+    .reward-grid{
+      min-width:0;
+      min-height:0;
+      overflow-y:auto;
+      overflow-x:hidden;
+      align-content:start;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      grid-template-rows:repeat(3,minmax(152px,1fr));
+      gap:10px;
+      padding:10px 4px 12px 0;
+      scrollbar-gutter:stable;
+    }
+
+    .reward-card{
+      min-width:0;
+      min-height:0;
+      padding:8px 10px 9px;
+      grid-template-rows:auto minmax(56px,1fr) auto 32px;
+      gap:5px;
+      overflow:hidden;
+    }
+
+    .reward-card h4{
+      min-height:18px;
+      display:grid;
+      place-items:center;
+      margin:0;
+      line-height:1.15;
+      font-size:11px;
+    }
+
+    .reward-action{
+      position:relative;
+      z-index:3;
+      align-self:end;
+      width:100%;
+      height:32px;
+      min-height:32px;
+      padding:0 10px;
+      display:grid;
+      place-items:center;
+      border-radius:14px;
+      line-height:1;
+      font-size:9px;
+      overflow:hidden;
+    }
+
+    .ticket-pile{
+      width:106px;
+      height:70px;
+      transform:none;
+    }
+
+    .ticket-slip,.ticket-face{
+      left:7px;
+      top:10px;
+      width:92px;
+      height:54px;
+    }
+
+    .ticket-face{
+      grid-template-columns:35px 1fr;
+      padding:8px;
+    }
+
+
+    .ticket-icon{
+      width:30px;
+      height:30px;
+    }
+
+    .ticket-icon svg{
+      width:28px;
+      height:28px;
+    }
+
+
+    .pile-count{
+      right:0;
+      bottom:0;
+      min-width:27px;
+      height:27px;
+    }
+
+    .history-panel .drawer-title{
+      font-size:15px!important;
+    }
+
+    @media (max-width:1280px) and (min-width:901px){
+      .rewards-board{gap:10px}
+      .reward-zone{padding:10px}
+      .zone-head{padding-bottom:8px}
+      .zone-head h3{font-size:16px}
+      .reward-grid{
+        gap:8px;
+        grid-template-rows:repeat(3,minmax(148px,1fr));
+        padding-top:8px;
+      }
+      .reward-card{
+        min-height:0;
+        padding:7px 8px 8px;
+        grid-template-rows:auto minmax(52px,1fr) auto 30px;
+      }
+      .reward-action{
+        height:30px;
+        min-height:30px;
+      }
+      .ticket-pile{
+        width:104px;
+        height:70px;
+        transform:none;
+      }
+      .ticket-slip,.ticket-face{
+        left:7px;
+        top:9px;
+        width:90px;
+        height:54px;
+      }
+      .ticket-face{
+        grid-template-columns:35px 1fr;
+        padding:7px;
+      }
+      .ticket-icon,.ticket-icon svg{width:30px;height:30px}
+      .reward-card h4{font-size:10px}
+    }
+
+    @media (max-height:760px) and (min-width:901px){
+      .reward-grid{
+        grid-template-rows:repeat(3,148px);
+      }
+      .reward-zone{
+        overflow:hidden;
+      }
+    }
+
+    @media (max-width:900px){
+      .rewards-view{overflow:visible}
+      .rewards-board{overflow:visible}
+      .reward-zone{overflow:visible}
+      .reward-grid{
+        overflow:visible;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        grid-template-rows:none;
+        grid-auto-rows:minmax(164px,auto);
+      }
+    }
+
+
+    /* v7: full task tile hit area */
+    .task{
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .task:not(.disabled):hover{
+      border-color:rgba(171,171,171,.48);
+      background:rgba(249,249,249,.98);
+      box-shadow:0 8px 17px rgba(97,97,97,.08);
+      transform:translateY(-1px);
+    }
+
+    .task.done:not(.disabled):hover{
+      background:rgba(225,225,225,.42);
+      border-color:rgba(161,161,161,.50);
+    }
+
+    .task:focus-visible{
+      outline:3px solid rgba(171,171,171,.34);
+      outline-offset:2px;
+    }
+
+    .task .check{
+      pointer-events:none;
+    }
+
+    :root{
+      color-scheme:light;
+      accent-color:#454545;
+      --ink:#252525;
+      --secondary-ink:#595959;
+      --action:#383838;
+      --action-highlight:#4d4d4d;
+    }
+
+    body{
+      background:
+        radial-gradient(ellipse at 15% 5%,rgba(255,255,255,.90),transparent 49%),
+        linear-gradient(145deg,#f3f3f3,#e2e2e2);
+    }
+
+    body::before{
+      background:radial-gradient(ellipse at 92% 35%,rgba(255,255,255,.36),transparent 43%);
+    }
+
+    ::selection{color:#fff;background:#4d4d4d}
+    :focus-visible,.task:focus-visible{
+      outline:2px solid #666;
+      outline-offset:2px;
+    }
+
+    .brand-sub,.label,.stat-pill span,.exp-readout,.task-exp,
+    .capsule span,.zone-seal,.reward-meta,.reward-meta b,
+    .used-ticket-mini time,.history-item time,.modal-owned{
+      color:var(--secondary-ink);
+    }
+
+    .nav-btn.active,
+    .gel-btn:not(.secondary),.modal-confirm{
+      background:linear-gradient(155deg,var(--action-highlight),var(--action));
+      border-color:var(--action);
+      box-shadow:0 5px 12px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.22);
+      color:#fff;
+    }
+
+    .task.done,.task.done:not(.disabled):hover{
+      background:linear-gradient(145deg,#eeeeee,#e1e1e1);
+      border-color:#a0a0a0;
+    }
+
+    .task.done .check{
+      background:var(--action);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.24);
+    }
+
+    .syrup{
+      background:
+        radial-gradient(circle at 35% 18%,rgba(255,255,255,.68) 0 3px,transparent 4%),
+        linear-gradient(to top,#555,#969696);
+    }
+
+    .syrup::after{background:#bdbdbd;box-shadow:0 2px 8px rgba(0,0,0,.13)}
+    .exp-track span{background:linear-gradient(90deg,#444,#707070)}
+    .today-view{
+      position:relative;
+      inset:auto;
+      align-items:start;
+      overflow:visible;
+    }
+
+    @media(max-width:1050px){
+      .today-view{grid-template-columns:minmax(0,1fr)}
+      .sheet{grid-row:1}
+      .side-stack,.right-stack{grid-template-rows:auto}
+    }
+
+    @media(max-width:620px){
+      .topbar{grid-template-columns:minmax(0,1fr)}
+      .nav{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+      .nav-btn{min-width:0;padding-inline:4px}
+    }
+
+    @media(max-width:380px){
+      .reward-grid{grid-template-columns:minmax(0,1fr)}
+    }
+
+    .sheet{grid-template-rows:auto auto auto;gap:12px}
+    .sheet-top{grid-template-columns:minmax(0,1fr) auto}
+    .sheet-top .gel-btn,.task-form-actions .gel-btn{padding-inline:16px}
+    #dailyTasks .task{width:100%;text-align:left;grid-template-columns:32px minmax(0,1fr) auto}
+    .task .check{display:grid;place-items:center;border:1px solid #aaa}
+    .task-name,.task-settings-list strong{overflow-wrap:anywhere}
+    .task-settings{border-top:1px solid #ddd;padding-top:10px}
+    .task-settings summary{cursor:pointer;font-size:12px;font-weight:800;padding:6px 0}
+    .task-settings-list{display:grid;gap:6px;list-style:none;margin:6px 0 0;padding:0}
+    .task-settings-list li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center}
+    .task-settings-list strong,.task-settings-list small{display:block}
+    .task-settings-list strong,.task-empty{font-size:13px}
+    .task-settings-list small,.task-empty{color:var(--secondary-ink)}
+    .task-dialog{
+      width:min(425px,calc(100% - 24px));border:1px solid #fff;border-radius:22px;
+      padding:20px;background:#f8f8f8;color:var(--ink);box-shadow:0 20px 65px #0004;
+    }
+    .task-dialog::backdrop{background:#0005}
+    #taskForm{display:grid;gap:12px}
+    #taskForm h2,#taskForm p{margin:0}
+    #taskForm>label,.task-fields label{display:grid;gap:5px;font-size:13px;font-weight:700}
+    .task-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    #taskForm input:not([type="checkbox"]),#taskForm select{
+      box-sizing:border-box;width:100%;padding:8px;border:1px solid #aaa;border-radius:8px;
+      color:inherit;background:#fff;font:inherit;font-size:16px;
+    }
+    #taskWeekdays{min-width:0;margin:0;border:1px solid #aaa;border-radius:8px}
+    .weekday-options{display:flex;flex-wrap:wrap;gap:8px;font-size:13px}
+    .weekday-options label{display:flex;align-items:center;gap:3px}
+    .task-form-actions{display:flex;justify-content:flex-end;gap:8px}
+    .task-form-error{font-size:13px;font-weight:700}
+
+    #ticketForm{display:grid;gap:12px}
+    #ticketForm h2,#ticketForm p{margin:0}
+    #ticketForm>label{display:grid;gap:5px;font-size:13px;font-weight:700}
+    #ticketForm input{
+      width:100%;padding:8px;border:1px solid #aaa;border-radius:8px;
+      color:inherit;background:#fff;font:inherit;font-size:16px;
+    }
+    .ticket-editor-actions{display:flex;align-items:center;gap:8px}
+    .ticket-editor-actions .gel-btn{flex:0 1 auto;padding-inline:16px}
+    #cancelTicketEdit{margin-left:auto}
+    .reward-meta .edit-ticket{padding:5px 9px}
+    .reward-grid{grid-template-rows:none;grid-auto-rows:minmax(164px,auto)}
+    .reward-card h4{overflow-wrap:anywhere}
+    .ticket-face{grid-template-columns:1fr;place-items:center}
+    .reward-grid>.task-empty{grid-column:1/-1}
+
+    .delete-dialog h2{margin:0;font-size:19px}
+    .delete-dialog p{line-height:1.45;overflow-wrap:anywhere}
+    .delete-dialog .gel-btn{flex:0 1 auto;padding-inline:16px}
+
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">◌</div>
+      <div>
+        <h1>Milkglass Desk</h1>
+        <div class="brand-sub">habit laboratory</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-btn active" data-view="today">TODAY</button>
+      <button class="nav-btn" data-view="rewards">REWARDS</button>
+      <button class="nav-btn" id="historyToggle">LOG</button>
+    </nav>
+
+    <div class="header-stats">
+      <div class="stat-pill"><span>LEVEL</span><strong>Lv.<b id="headerLevel">1</b></strong></div>
+      <div class="stat-pill"><span>COINS</span><strong><i class="coin-dot">✦</i> <b id="headerCoins">0</b></strong></div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="view today-view active" id="view-today">
+      <aside class="side-stack">
+        <section class="panel stat-card">
+          <span class="label">EXP Syrup</span>
+          <div class="level-panel">
+            <div class="syrup-vial"><div class="syrup" id="syrupLevel"></div></div>
+            <div>
+              <div class="level-number">Lv.<span id="levelValue">1</span></div>
+              <div class="exp-track"><span id="expBar"></span></div>
+              <div class="exp-readout"><span id="expWithin">0</span> / 100 EXP</div>
+              <div class="exp-readout">TOTAL <span id="totalExp">0</span></div>
+            </div>
+          </div>
+        </section>
+
+      </aside>
+
+      <section class="panel sheet">
+        <div class="sheet-top">
+          <div>
+            <h2>Tasks</h2>
+            <time class="label" id="taskDate"></time>
+          </div>
+          <button class="gel-btn" id="addTask" type="button">Add task</button>
+        </div>
+        <div class="life-grid" id="dailyTasks"></div>
+        <details class="task-settings">
+          <summary>Manage all tasks</summary>
+          <ul class="task-settings-list" id="taskSettings"></ul>
+        </details>
+      </section>
+
+      <aside class="right-stack">
+        <section class="panel capsule-panel">
+          <span class="label">Today</span>
+          <div class="capsule-grid">
+            <div class="capsule"><span>TODAY EXP</span><strong id="todayExp">0</strong></div>
+            <div class="capsule"><span>COINS</span><strong id="coinValue">0</strong></div>
+            <div class="capsule"><span>TASKS DONE</span><strong id="taskCount">0/0</strong></div>
+          </div>
+        </section>
+
+        <section class="panel used-card">
+          <div class="used-head">
+            <div>
+              <span class="label">Used Today</span>
+              <h2>Used Tickets</h2>
+            </div>
+            <span class="used-count" id="usedTicketCount">0</span>
+          </div>
+          <div class="used-ticket-list" id="usedTicketsList"></div>
+        </section>
+
+        <section class="panel save-card">
+          <span class="label">Save Data</span>
+          <div class="save-row">
+            <button class="mini-btn" id="exportButton">Export</button>
+            <label class="mini-btn">
+              Import
+              <input type="file" id="importInput" accept=".json,application/json" hidden>
+            </label>
+            <button class="mini-btn" id="devCoins">+50C</button>
+          </div>
+        </section>
+      </aside>
+    </section>
+
+    <section class="view rewards-view" id="view-rewards">
+      <div class="rewards-head">
+        <div>
+          <span class="label">Rewards</span>
+          <h2 class="drawer-title">Ticket Cabinet</h2>
+        </div>
+        <div class="stat-pill"><span>COINS</span><strong><i class="coin-dot">✦</i> <b id="rewardCoins">0</b></strong></div>
+      </div>
+
+      <div class="rewards-board">
+        <section class="panel reward-zone chest-zone">
+          <div class="zone-head">
+            <div>
+              <span class="label">Your Tickets</span>
+              <h3>CHEST</h3>
+            </div>
+            <span class="zone-seal">OWNED</span>
+          </div>
+          <div class="reward-grid" id="walletGrid"></div>
+        </section>
+
+        <section class="panel reward-zone shop-zone">
+          <div class="zone-head">
+            <div>
+              <span class="label">Buy Ticket</span>
+              <h3>SHOP</h3>
+            </div>
+            <button class="mini-btn" type="button" id="addTicket">Add ticket</button>
+          </div>
+          <div class="reward-grid" id="shopGrid"></div>
+        </section>
+      </div>
+    </section>
+
+    <aside class="history-panel" id="historyPanel">
+      <div class="drawer-top" style="padding:0 0 10px">
+        <div>
+          <span class="label">History</span>
+          <h2 class="drawer-title" style="font-size:15px">Activity Log</h2>
+        </div>
+        <button class="mini-btn" id="closeHistory">Close</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </aside>
+  </main>
+</div>
+
+
+<div class="ticket-modal" id="ticketModal" aria-hidden="true">
+  <div class="modal-scrim" id="modalScrim"></div>
+  <section class="ticket-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTicketName">
+    <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+    <span class="label">Use Ticket</span>
+    <h2 id="modalTicketName">Use Ticket</h2>
+    <div class="modal-ticket-stage" id="modalTicketPreview"></div>
+    <div class="modal-owned">Owned <strong id="modalOwnedCount">0</strong> → After <strong id="modalAfterCount">0</strong></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="modalCancel">Not Now</button>
+      <button class="modal-confirm" id="modalConfirm">Use Ticket</button>
+    </div>
+    <div class="used-stamp">USED</div>
+    <div class="bubble-burst" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+  </section>
+</div>
+
+<div class="ticket-modal" id="purchaseModal" aria-hidden="true">
+  <div class="modal-scrim" id="purchaseScrim"></div>
+  <section class="ticket-dialog purchase-dialog" role="dialog" aria-modal="true" aria-labelledby="purchaseTicketName">
+    <button class="modal-close" id="purchaseClose" aria-label="Close">×</button>
+    <span class="label">Buy Ticket</span>
+    <h2 id="purchaseTicketName">Buy Ticket</h2>
+    <div class="modal-ticket-stage" id="purchaseTicketPreview"></div>
+    <div class="modal-owned">Coins <strong id="purchaseCoinBefore">0</strong> → After <strong id="purchaseCoinAfter">0</strong></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="purchaseCancel">Cancel</button>
+      <button class="modal-confirm" id="purchaseConfirm">Buy Ticket</button>
+    </div>
+    <div class="purchase-stamp">GET!</div>
+    <div class="bubble-burst" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<dialog class="task-dialog" id="taskDialog" aria-labelledby="taskDialogTitle">
+  <form id="taskForm">
+    <h2 id="taskDialogTitle">Add task</h2>
+    <label>Task name <input id="taskName" required maxlength="100" autofocus></label>
+    <div class="task-fields">
+      <label>EXP <input id="taskExp" type="number" min="0" max="9999" step="1" required></label>
+      <label>Coins <input id="taskCoins" type="number" min="0" max="9999" step="1" required></label>
+    </div>
+    <label>Repeat
+      <select id="taskRepeat">
+        <option value="daily">Every day</option>
+        <option value="weekly">Selected weekdays</option>
+        <option value="once">Once</option>
+      </select>
+    </label>
+    <fieldset id="taskWeekdays" hidden>
+      <legend>Days of the week</legend>
+      <div class="weekday-options">
+        <label><input type="checkbox" name="weekday" value="0"> Sun</label>
+        <label><input type="checkbox" name="weekday" value="1"> Mon</label>
+        <label><input type="checkbox" name="weekday" value="2"> Tue</label>
+        <label><input type="checkbox" name="weekday" value="3"> Wed</label>
+        <label><input type="checkbox" name="weekday" value="4"> Thu</label>
+        <label><input type="checkbox" name="weekday" value="5"> Fri</label>
+        <label><input type="checkbox" name="weekday" value="6"> Sat</label>
+      </div>
+    </fieldset>
+    <div class="task-form-actions">
+      <button class="mini-btn" id="taskCancel" type="button">Cancel</button>
+      <button class="gel-btn" type="submit">Save task</button>
+    </div>
+    <p class="task-form-error" id="taskFormError" role="alert" hidden></p>
+  </form>
+</dialog>
+
+<dialog class="task-dialog" id="ticketEditor" aria-labelledby="ticketEditorTitle">
+  <form id="ticketForm">
+    <h2 id="ticketEditorTitle">Add ticket</h2>
+    <label>Ticket name <input id="ticketName" required maxlength="100" autofocus></label>
+    <label>Price in coins <input id="ticketPrice" type="number" min="0" max="9999" step="1" required></label>
+    <div class="ticket-editor-actions">
+      <button class="mini-btn" id="deleteTicket" type="button" hidden>Delete</button>
+      <button class="mini-btn" id="cancelTicketEdit" type="button">Cancel</button>
+      <button class="gel-btn" type="submit">Save ticket</button>
+    </div>
+    <p class="task-form-error" id="ticketEditorError" role="alert" hidden></p>
+  </form>
+</dialog>
+
+<dialog class="task-dialog delete-dialog" id="deleteDialog" aria-labelledby="deleteDialogTitle" aria-describedby="deleteDialogMessage">
+  <h2 id="deleteDialogTitle">Confirm deletion</h2>
+  <p id="deleteDialogMessage"></p>
+  <p class="task-form-error" id="deleteDialogError" role="alert" hidden></p>
+  <div class="task-form-actions">
+    <button class="mini-btn" id="cancelDeletion" type="button" autofocus>Cancel</button>
+    <button class="gel-btn" id="confirmDeletion" type="button">Delete</button>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  "use strict";
+
+  const STORAGE_KEY = "milkglass-desk-daily-state-v9";
+  const SCHEMA_VERSION = 9;
+  const WEEKDAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const MAX_TASK_POINTS = 9999;
+
+  const LEGACY_TASKS = [
+    {id:"breakfast",name:"Breakfast",exp:5},
+    {id:"soyMilk",name:"Soy Milk",exp:5},
+    {id:"brushMorning",name:"Brush Teeth",exp:5},
+    {id:"waterAM",name:"Water Bottle",exp:5},
+    {id:"stretchAM",name:"Morning Stretch",exp:5},
+    {id:"bath",name:"Bath / Shower",exp:5},
+    {id:"waterPM",name:"Extra Water",exp:5,coins:5},
+    {id:"exercise",name:"Exercise 25 min",exp:5,coins:5},
+    {id:"dinner",name:"Dinner",exp:5},
+    {id:"protein",name:"Protein",exp:5,coins:5}
+  ];
+
+  const DEFAULT_TICKETS = [
+    {id:"drink",name:"Drink Ticket",price:20},
+    {id:"cafe5",name:"Net Café 5 min",price:5},
+    {id:"cafe15",name:"Net Café 15 min",price:15},
+    {id:"cafe30",name:"Net Café 30 min",price:30},
+    {id:"cafe60",name:"Net Café 60 min",price:60},
+    {id:"shopping500",name:"Shopping ¥500",price:250}
+  ];
+
+  const todayKey = () => {
+    const d = new Date();
+    const local = new Date(d.getTime() - d.getTimezoneOffset()*60000);
+    return local.toISOString().slice(0,10);
+  };
+
+  const freshState = () => ({
+    schemaVersion:SCHEMA_VERSION,
+    lastModified:new Date().toISOString(),
+    sync:{provider:null,status:"local",remoteRevision:null},
+    profile:{totalExp:0,coins:0},
+    tickets:DEFAULT_TICKETS.map(ticket=>({...ticket,archived:false})),
+    wallet:{},
+    tasks:[],
+    today:{date:todayKey(),completed:{},carriedExp:0,usedTickets:[]},
+    history:[]
+  });
+
+  let state = load();
+  let savedState = JSON.stringify(state);
+  let toastTimer = null;
+  let midnightTimer = null;
+
+  function normalizeState(parsed){
+    const base=freshState();
+    if(!isRecord(parsed)||!isRecord(parsed.profile)||!isRecord(parsed.today)){
+      throw new Error("Missing profile or daily sheet");
+    }
+    const version=parsed.schemaVersion??7;
+    if(!Number.isInteger(version)||version<1||version>SCHEMA_VERSION){
+      throw new Error("Unsupported backup version");
+    }
+    const normalized={
+      ...base,
+      lastModified:parsed.lastModified??base.lastModified,
+      profile:{...base.profile,...parsed.profile},
+      wallet:{...base.wallet,...parsed.wallet},
+      sync:{...base.sync,...parsed.sync},
+      history:parsed.history===undefined?[]:parsed.history,
+      today:{
+        date:parsed.today.date===undefined?base.today.date:parsed.today.date,
+        completed:parsed.today.completed===undefined?{}:parsed.today.completed,
+        carriedExp:parsed.today.carriedExp===undefined?0:parsed.today.carriedExp,
+        usedTickets:parsed.today.usedTickets===undefined?[]:parsed.today.usedTickets
+      }
+    };
+    const {profile,wallet,today,history:entries}=normalized;
+    if(
+      ![profile.totalExp,profile.coins,today.carriedExp].every(isPoints) ||
+      !Object.entries(wallet).every(([id,count])=>validItemId(id)&&isPoints(count)) ||
+      !validDate(today.date) ||
+      !isRecord(today.completed) ||
+      !Object.entries(today.completed).every(([id,award])=>validItemId(id)&&validAward(award)) ||
+      !Array.isArray(today.usedTickets) || !today.usedTickets.every(ticket=>
+        isRecord(ticket)&&validItemId(ticket.id)&&validTimestamp(ticket.at)&&
+        (ticket.name===undefined||validName(ticket.name))) ||
+      !Array.isArray(entries) || !entries.every(entry=>
+        isRecord(entry)&&typeof entry.text==="string"&&validTimestamp(entry.at)) ||
+      [parsed.wallet,parsed.sync].some(value=>value!==undefined&&!isRecord(value))
+    ){
+      throw new Error("Invalid Milkglass backup or saved state");
+    }
+
+    if(version>=9){
+      if(!Array.isArray(parsed.tickets)||!parsed.tickets.every(validTicket) ||
+        new Set(parsed.tickets.map(ticket=>ticket.id)).size!==parsed.tickets.length ||
+        Object.keys(wallet).some(id=>!parsed.tickets.some(ticket=>ticket.id===id))){
+        throw new Error("Invalid ticket definitions");
+      }
+      normalized.tickets=parsed.tickets;
+    }else{
+      // Preserve balances even if an older backup contains a ticket missing from its catalog.
+      const knownIds=new Set(normalized.tickets.map(ticket=>ticket.id));
+      for(const id of Object.keys(wallet)){
+        if(!knownIds.has(id)) normalized.tickets.push({id,name:"Imported ticket",price:0,archived:true});
+      }
+    }
+    normalized.today.usedTickets=today.usedTickets.map(record=>({
+      ...record,name:record.name??normalized.tickets.find(ticket=>ticket.id===record.id)?.name??"Ticket"
+    }));
+    if(version<8){
+      const legacy=parsed.today;
+      const pomodoros=legacy.pomodoros??0;
+      const diaryExp=legacy.diaryExp??0;
+      if(!isPoints(pomodoros)||pomodoros>24||!isPoints(diaryExp) ||
+        (legacy.tasks!==undefined&&(!isRecord(legacy.tasks)||
+          !Object.values(legacy.tasks).every(value=>typeof value==="boolean"))) ||
+        (legacy.diary!==undefined&&typeof legacy.diary!=="boolean")){
+        throw new Error("Invalid legacy daily sheet");
+      }
+      const defaults=[...LEGACY_TASKS,{id:"paperJournal",name:"Paper Journal",exp:Math.min(diaryExp,MAX_TASK_POINTS)}];
+      normalized.tasks=defaults.map(task=>({...task,coins:task.coins??0,repeat:"daily",days:[],lastCompletedOn:null}));
+      normalized.today.completed=Object.fromEntries(normalized.tasks
+        .filter(task=>task.id==="paperJournal"?legacy.diary:legacy.tasks?.[task.id])
+        .map(({id,name,exp,coins})=>[id,{name,exp,coins}]));
+      normalized.today.carriedExp=pomodoros*5+Math.floor(pomodoros/8)*10+
+        (legacy.diary?Math.max(0,diaryExp-MAX_TASK_POINTS):0);
+    }else{
+      if(!Array.isArray(parsed.tasks)||!parsed.tasks.every(validTask) ||
+        new Set(parsed.tasks.map(task=>task.id)).size!==parsed.tasks.length){
+        throw new Error("Invalid task definitions");
+      }
+      normalized.tasks=parsed.tasks;
+    }
+    return normalized;
+  }
+
+  function isPoints(value){
+    return Number.isSafeInteger(value)&&value>=0;
+  }
+
+  function validDate(value){
+    if(typeof value!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date=new Date(value);
+    return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===value;
+  }
+
+  function validItemId(value){
+    return typeof value==="string"&&/^[a-zA-Z0-9-]+$/.test(value)&&!Object.hasOwn(Object.prototype,value);
+  }
+
+  function validName(name){
+    return typeof name==="string"&&name.trim().length>0&&name.length<=100;
+  }
+
+  function validTicket(ticket){
+    return isRecord(ticket)&&validItemId(ticket.id)&&validName(ticket.name)&&
+      isPoints(ticket.price)&&ticket.price<=9999&&typeof ticket.archived==="boolean";
+  }
+
+  function validAward(value){
+    return isRecord(value)&&validName(value.name)&&
+      [value.exp,value.coins].every(points=>isPoints(points)&&points<=MAX_TASK_POINTS);
+  }
+
+  function validTask(task){
+    return validAward(task)&&validItemId(task.id)&&["daily","weekly","once"].includes(task.repeat)&&
+      Array.isArray(task.days)&&task.days.every(day=>Number.isInteger(day)&&day>=0&&day<=6)&&
+      new Set(task.days).size===task.days.length&&(task.repeat==="weekly"?task.days.length>0:task.days.length===0)&&
+      (task.lastCompletedOn===null||validDate(task.lastCompletedOn));
+  }
+
+  function isRecord(value){
+    return value!==null && typeof value==="object" && !Array.isArray(value);
+  }
+
+  function validTimestamp(value){
+    return typeof value==="string" && Number.isFinite(Date.parse(value));
+  }
+
+  function load(){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY);
+      return raw?normalizeState(JSON.parse(raw)):freshState();
+    }catch(error){
+      console.error(error);
+      return freshState();
+    }
+  }
+
+  function save(next=state){
+    next.lastModified=new Date().toISOString();
+    try{
+      const serialized=JSON.stringify(next);
+      localStorage.setItem(STORAGE_KEY,serialized);
+      savedState=serialized;
+    }catch(error){
+      console.error(error);
+      state=JSON.parse(savedState);
+      render();
+      toast("Could not save. Your last saved data is unchanged.");
+      return false;
+    }
+    state=next;
+    render();
+    return true;
+  }
+
+  function history(text,next=state){
+    next.history.unshift({at:new Date().toISOString(),text});
+    next.history=next.history.slice(0,100);
+  }
+
+  function rollDay(next,newDay){
+    if(next.today.date===newDay.date) return false;
+    history(`Closed sheet for ${next.today.date}`,next);
+    next.today=newDay;
+    return true;
+  }
+
+  function refreshDay(){
+    if(state.today.date===todayKey()) return true;
+    rollDay(state,freshState().today);
+    return save();
+  }
+
+  function scheduleMidnight(){
+    clearTimeout(midnightTimer);
+    const midnight=new Date();
+    midnight.setHours(24,0,0,0);
+    midnightTimer=setTimeout(checkDate,Math.max(0,midnight.getTime()-Date.now()));
+  }
+
+  function checkDate(){
+    refreshDay();
+    scheduleMidnight();
+  }
+
+  function isDue(task,date){
+    if(task.repeat==="daily") return true;
+    if(task.repeat==="once") return !task.lastCompletedOn||task.lastCompletedOn===date;
+    return task.days.includes(new Date(date+"T00:00:00Z").getUTCDay());
+  }
+
+  function visibleTasks(){
+    const {date,completed}=state.today;
+    return state.tasks.filter(task=>Object.hasOwn(completed,task.id)||isDue(task,date));
+  }
+
+  function toggleTask(id){
+    if(!refreshDay()) return;
+    const task=visibleTasks().find(item=>item.id===id);
+    if(!task) return;
+    const completed=state.today.completed;
+    const previous=Object.hasOwn(completed,id)?completed[id]:null;
+    if(previous){
+      if(state.profile.coins<previous.coins){
+        toast("Not enough coins to undo this task.");
+        return;
+      }
+      state.profile.totalExp=Math.max(0,state.profile.totalExp-previous.exp);
+      state.profile.coins-=previous.coins;
+      task.lastCompletedOn=null;
+      delete completed[id];
+      history(`${previous.name} canceled −${previous.exp} EXP −${previous.coins} C`);
+    }else{
+      const {name,exp,coins}=task;
+      if(!isPoints(state.profile.totalExp+exp)||!isPoints(state.profile.coins+coins)){
+        toast("Point balance limit reached.");
+        return;
+      }
+      completed[id]={name,exp,coins};
+      task.lastCompletedOn=state.today.date;
+      state.profile.totalExp+=exp;
+      state.profile.coins+=coins;
+      history(`${name} done +${exp} EXP +${coins} C`);
+    }
+    save();
+  }
+
+  let editingTaskId=null;
+
+  function updateWeekdays(){
+    const weekly=document.getElementById("taskRepeat").value==="weekly";
+    document.getElementById("taskWeekdays").hidden=!weekly;
+  }
+
+  function openTaskEditor(task){
+    editingTaskId=task?.id??null;
+    document.getElementById("taskDialogTitle").textContent=task?"Edit task":"Add task";
+    document.getElementById("taskName").value=task?.name??"";
+    document.getElementById("taskExp").value=task?.exp??5;
+    document.getElementById("taskCoins").value=task?.coins??0;
+    document.getElementById("taskRepeat").value=task?.repeat??"daily";
+    document.querySelectorAll('[name="weekday"]').forEach(input=>{
+      input.checked=task?.days.includes(Number(input.value))??false;
+    });
+    document.getElementById("taskFormError").hidden=true;
+    updateWeekdays();
+    document.getElementById("taskDialog").showModal();
+  }
+
+  function saveTask(next,id=editingTaskId){
+    if(!refreshDay()) return false;
+    const task=state.tasks.find(item=>item.id===id);
+    if(id&&!task) return false;
+    const definition={
+      ...next,
+      id:task?.id??newId("task"),
+      lastCompletedOn:task?.lastCompletedOn??null
+    };
+    if(!validTask(definition)) return false;
+    if(task) Object.assign(task,definition);
+    else state.tasks.push(definition);
+    return save();
+  }
+
+  function submitTask(event){
+    event.preventDefault();
+    const repeat=document.getElementById("taskRepeat").value;
+    const days=repeat==="weekly"?[...document.querySelectorAll('[name="weekday"]:checked')].map(input=>Number(input.value)):[];
+    const name=document.getElementById("taskName").value.trim();
+    const error=document.getElementById("taskFormError");
+    error.textContent= !name ? "Enter a task name." :
+      repeat==="weekly"&&!days.length ? "Select at least one weekday." : "";
+    error.hidden=!error.textContent;
+    if(!error.hidden) return;
+    if(saveTask({
+      name,repeat,days,
+      exp:document.getElementById("taskExp").valueAsNumber,
+      coins:document.getElementById("taskCoins").valueAsNumber
+    })){
+      document.getElementById("taskDialog").close();
+      focusTaskControl(editingTaskId);
+    }else{
+      error.textContent="Could not save this task. Check the fields and try again.";
+      error.hidden=false;
+    }
+  }
+
+  function removeTask(id){
+    if(!refreshDay()||!state.tasks.some(task=>task.id===id)) return false;
+    state.tasks=state.tasks.filter(task=>task.id!==id);
+    return save();
+  }
+
+  function focusTaskControl(id){
+    const editButton=[...document.querySelectorAll("#taskSettings button[data-edit]")]
+      .find(button=>button.dataset.edit===id);
+    (editButton??document.getElementById("addTask")).focus();
+  }
+
+  function newId(prefix){
+    const suffix=Array.from(crypto.getRandomValues(new Uint32Array(4)),
+      part=>part.toString(16).padStart(8,"0")).join("");
+    return prefix+"-"+suffix;
+  }
+
+  let editingTicketId=null;
+
+  function openTicketEditor(ticket){
+    editingTicketId=ticket?.id??null;
+    document.getElementById("ticketEditorTitle").textContent=ticket?"Edit ticket":"Add ticket";
+    document.getElementById("ticketName").value=ticket?.name??"";
+    document.getElementById("ticketPrice").value=ticket?.price??5;
+    document.getElementById("deleteTicket").hidden=!ticket;
+    document.getElementById("ticketEditorError").hidden=true;
+    document.getElementById("ticketEditor").showModal();
+  }
+
+  function saveTicket(name,price,id=editingTicketId){
+    if(!refreshDay()) return false;
+    const current=state.tickets.find(ticket=>ticket.id===id&&!ticket.archived);
+    if(id&&!current) return false;
+    const ticket={id:current?.id??newId("ticket"),name,price,archived:false};
+    if(!validTicket(ticket)) return false;
+    if(current) Object.assign(current,ticket);
+    else state.tickets.push(ticket);
+    return save();
+  }
+
+  function archiveTicket(id){
+    if(!refreshDay()) return false;
+    const ticket=state.tickets.find(item=>item.id===id&&!item.archived);
+    if(!ticket) return false;
+    ticket.archived=true;
+    return save();
+  }
+
+  function closeTicketEditor(id){
+    document.getElementById("ticketEditor").close();
+    const button=[...document.querySelectorAll("#shopGrid button[data-ticket-edit]")]
+      .find(candidate=>candidate.dataset.ticketEdit===id);
+    (button??document.getElementById("addTicket")).focus();
+  }
+
+  const deleteDialog=document.getElementById("deleteDialog");
+  let pendingDeletion=null;
+
+  function requestDeletion(title,message,remove,afterDelete){
+    if(deleteDialog.open) return;
+    pendingDeletion={remove,afterDelete};
+    document.getElementById("deleteDialogTitle").textContent=title;
+    document.getElementById("deleteDialogMessage").textContent=message;
+    document.getElementById("deleteDialogError").hidden=true;
+    deleteDialog.showModal();
+  }
+
+  function confirmDeletion(){
+    if(!deleteDialog.open||!pendingDeletion) return;
+    const {remove,afterDelete}=pendingDeletion;
+    if(!remove()){
+      const error=document.getElementById("deleteDialogError");
+      error.textContent="Could not delete this item. Try again or cancel.";
+      error.hidden=false;
+      return;
+    }
+    pendingDeletion=null;
+    deleteDialog.close();
+    afterDelete();
+  }
+
+  let pendingPurchaseId=null;
+  let pendingPurchasePrice=null;
+  let purchaseBusy=false;
+
+  function purchase(id){
+    const item=state.tickets.find(ticket=>ticket.id===id);
+    if(!item||item.archived||state.profile.coins<item.price){toast("Ticket unavailable.");return}
+    pendingPurchaseId=id;
+    pendingPurchasePrice=item.price;
+    document.getElementById("purchaseTicketName").textContent=item.name;
+    document.getElementById("purchaseTicketPreview").innerHTML=ticketPile(1);
+    document.getElementById("purchaseCoinBefore").textContent=state.profile.coins;
+    document.getElementById("purchaseCoinAfter").textContent=state.profile.coins-item.price;
+    const modal=document.getElementById("purchaseModal");
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden","false");
+    document.getElementById("purchaseConfirm").focus();
+  }
+
+  function closePurchaseModal(){
+    if(purchaseBusy) return;
+    const modal=document.getElementById("purchaseModal");
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden","true");
+    pendingPurchaseId=null;
+    pendingPurchasePrice=null;
+  }
+
+  function confirmPurchase(){
+    if(purchaseBusy||!pendingPurchaseId||!refreshDay()) return;
+    const item=state.tickets.find(ticket=>ticket.id===pendingPurchaseId&&!ticket.archived);
+    if(!item||item.price!==pendingPurchasePrice){
+      closePurchaseModal();
+      toast("Ticket or price changed. Open the shop card again.");
+      return;
+    }
+    if(state.profile.coins<item.price){closePurchaseModal();toast("Not enough coins");return}
+    const count=state.wallet[item.id]??0;
+    if(!isPoints(count+1)){
+      closePurchaseModal();
+      toast("Ticket limit reached.");
+      return;
+    }
+    state.profile.coins-=item.price;
+    state.wallet[item.id]=count+1;
+    history(`Bought ${item.name} -${item.price} C`);
+    if(!save()) return;
+
+    purchaseBusy=true;
+    const dialog=document.querySelector(".purchase-dialog");
+    dialog.classList.add("purchasing");
+    document.getElementById("purchaseConfirm").disabled=true;
+    document.getElementById("purchaseCancel").disabled=true;
+    document.getElementById("purchaseClose").disabled=true;
+
+    setTimeout(()=>{
+      const modal=document.getElementById("purchaseModal");
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden","true");
+      dialog.classList.remove("purchasing");
+      document.getElementById("purchaseConfirm").disabled=false;
+      document.getElementById("purchaseCancel").disabled=false;
+      document.getElementById("purchaseClose").disabled=false;
+      purchaseBusy=false;
+      pendingPurchaseId=null;
+      pendingPurchasePrice=null;
+      toast(`${item.name} added to Chest`);
+    },1080);
+  }
+
+  let pendingTicketId=null;
+  let ticketUseBusy=false;
+
+  function useTicket(id){
+    const item=state.tickets.find(ticket=>ticket.id===id);
+    const count=state.wallet[id]||0;
+    if(!item||count<=0) return;
+    pendingTicketId=id;
+    document.getElementById("modalTicketName").textContent=item.name;
+    document.getElementById("modalTicketPreview").innerHTML=ticketPile(count);
+    document.getElementById("modalOwnedCount").textContent=count;
+    document.getElementById("modalAfterCount").textContent=count-1;
+    const modal=document.getElementById("ticketModal");
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden","false");
+    document.getElementById("modalConfirm").focus();
+  }
+
+  function closeTicketModal(){
+    if(ticketUseBusy) return;
+    const modal=document.getElementById("ticketModal");
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden","true");
+    pendingTicketId=null;
+  }
+
+  function confirmTicketUse(){
+    if(ticketUseBusy||!pendingTicketId||!refreshDay()) return;
+    const item=state.tickets.find(ticket=>ticket.id===pendingTicketId);
+    if(!item||(state.wallet[pendingTicketId]||0)<=0){closeTicketModal();return}
+    state.wallet[item.id]--;
+    state.today.usedTickets.push({id:item.id,name:item.name,at:new Date().toISOString()});
+    history(`Used ${item.name}`);
+    if(!save()) return;
+
+    ticketUseBusy=true;
+    const dialog=document.querySelector(".ticket-dialog");
+    dialog.classList.add("using");
+    document.getElementById("modalConfirm").disabled=true;
+    document.getElementById("modalCancel").disabled=true;
+    document.getElementById("modalClose").disabled=true;
+
+    setTimeout(()=>{
+      const modal=document.getElementById("ticketModal");
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden","true");
+      dialog.classList.remove("using");
+      document.getElementById("modalConfirm").disabled=false;
+      document.getElementById("modalCancel").disabled=false;
+      document.getElementById("modalClose").disabled=false;
+      ticketUseBusy=false;
+      pendingTicketId=null;
+      toast(`Used ${item.name}`);
+    },1050);
+  }
+
+  function exportJSON(){
+    if(!refreshDay()) return;
+    const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=`milkglass-desk-${todayKey()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast("Export complete");
+  }
+
+  async function importJSON(file){
+    try{
+      const next=normalizeState(JSON.parse(await file.text()));
+      rollDay(next,freshState().today);
+      history("Imported JSON backup",next);
+      if(save(next)) toast("Import complete");
+    }catch(e){
+      console.error(e);
+      toast("Could not import JSON");
+    }
+  }
+
+  function renderTasks(){
+    const root=document.getElementById("dailyTasks");
+    const tasks=visibleTasks();
+    const focusedId=root.contains(document.activeElement)?document.activeElement.dataset.task:null;
+    root.replaceChildren();
+    tasks.forEach(task=>{
+      const done=Object.hasOwn(state.today.completed,task.id);
+      const {exp,coins}=done?state.today.completed[task.id]:task;
+      const button=document.createElement("button");
+      button.className=`task${done?" done":""}`;
+      button.type="button";
+      button.dataset.task=task.id;
+      button.setAttribute("aria-pressed",String(done));
+      button.innerHTML=`<span class="check" aria-hidden="true"></span>
+        <span class="task-name">${escapeHTML(task.name)}</span>
+        <span class="task-exp">${exp} EXP${coins?" · "+coins+" C":""}</span>`;
+      button.addEventListener("click",()=>toggleTask(task.id));
+      root.appendChild(button);
+      if(task.id===focusedId) button.focus({preventScroll:true});
+    });
+    if(!tasks.length) root.innerHTML='<p class="task-empty">No tasks scheduled for today.</p>';
+
+    const settings=document.getElementById("taskSettings");
+    settings.replaceChildren();
+    state.tasks.forEach(task=>{
+      const item=document.createElement("li");
+      const schedule=task.repeat==="daily"?"Every day":task.repeat==="weekly"?
+        task.days.map(day=>WEEKDAYS[day]).join(", "):task.lastCompletedOn?"Once · completed":"Once";
+      item.innerHTML=`<div><strong>${escapeHTML(task.name)}</strong>
+        <small>${schedule} · ${task.exp} EXP · ${task.coins} C</small></div>
+        <button class="mini-btn" type="button">Edit</button>
+        <button class="mini-btn" type="button">Delete</button>`;
+      const [edit,remove]=item.querySelectorAll("button");
+      edit.dataset.edit=task.id;
+      edit.setAttribute("aria-label",`Edit ${task.name}`);
+      remove.setAttribute("aria-label",`Delete ${task.name}`);
+      edit.addEventListener("click",()=>openTaskEditor(task));
+      remove.addEventListener("click",()=>requestDeletion(
+        "Delete task?",
+        `“${task.name}” will be removed. Points you've already earned will stay.`,
+        ()=>removeTask(task.id),
+        ()=>focusTaskControl(null)
+      ));
+      settings.appendChild(item);
+    });
+    if(!state.tasks.length) settings.innerHTML='<li class="task-empty">Add a task to get started.</li>';
+  }
+
+  const ticketIcon = () => `
+    <svg viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round">
+      <path d="M11 17h42v9a6 6 0 0 0 0 12v9H11v-9a6 6 0 0 0 0-12z"/>
+      <path d="M39 18v28" stroke-dasharray="3 4"/>
+    </svg>`;
+
+  function ticketPile(count,sample=false){
+    const visible=sample?4:Math.min(count,12);
+    const slips=Array.from({length:visible},(_,i)=>
+      `<span class="ticket-slip" style="--i:${i}"></span>`
+    ).join("");
+    const empty=!sample&&count===0;
+    return `
+      <div class="ticket-pile${empty?" empty":""}" aria-hidden="true">
+        ${slips}
+        <div class="ticket-face"><div class="ticket-icon">${ticketIcon()}</div></div>
+        ${sample?"":`<span class="pile-count">${count}</span>`}
+      </div>`;
+  }
+
+  function renderWallet(){
+    const root=document.getElementById("walletGrid");
+    root.innerHTML="";
+    const tickets=state.tickets.filter(ticket=>!ticket.archived||(state.wallet[ticket.id]??0)>0);
+    tickets.forEach(item=>{
+      const count=state.wallet[item.id]??0;
+      const el=document.createElement("article");
+      el.className=`reward-card wallet-card ${count?"owned":"empty-card"}`;
+      el.innerHTML=`
+        <div class="reward-meta"><b>×${count}</b></div>
+        ${ticketPile(count)}
+        <h4>${escapeHTML(item.name)}</h4>
+        <button class="reward-action use-action" ${count?"":"disabled"}>Use Ticket</button>
+      `;
+      el.querySelector("button").addEventListener("click",()=>useTicket(item.id));
+      root.appendChild(el);
+    });
+    if(!tickets.length) root.innerHTML='<p class="task-empty">No tickets in your chest.</p>';
+  }
+
+  function renderShop(){
+    const root=document.getElementById("shopGrid");
+    root.innerHTML="";
+    const tickets=state.tickets.filter(ticket=>!ticket.archived);
+    tickets.forEach(item=>{
+      const el=document.createElement("article");
+      el.className="reward-card shop-card-new";
+      el.innerHTML=`
+        <div class="reward-meta">
+          <b><i class="coin-dot">✦</i>${item.price}</b>
+          <button class="mini-btn edit-ticket" type="button">Edit</button>
+        </div>
+        ${ticketPile(1,true)}
+        <h4>${escapeHTML(item.name)}</h4>
+        <button class="reward-action buy-action" ${state.profile.coins<item.price?"disabled":""}>Buy Ticket</button>
+      `;
+      const edit=el.querySelector(".edit-ticket");
+      edit.dataset.ticketEdit=item.id;
+      edit.setAttribute("aria-label",`Edit ${item.name}`);
+      edit.addEventListener("click",()=>openTicketEditor(item));
+      el.querySelector(".buy-action").addEventListener("click",()=>purchase(item.id));
+      root.appendChild(el);
+    });
+    if(!tickets.length) root.innerHTML='<p class="task-empty">No tickets for sale.</p>';
+  }
+
+  function renderUsedTickets(){
+    const root=document.getElementById("usedTicketsList");
+    const used=state.today.usedTickets;
+    document.getElementById("usedTicketCount").textContent=used.length;
+    if(!used.length){
+      root.innerHTML=`<div class="used-empty"><span>◇</span><b>NONE USED</b></div>`;
+      return;
+    }
+    root.innerHTML=used.slice().reverse().map(record=>{
+      const name=record.name??state.tickets.find(ticket=>ticket.id===record.id)?.name??"Ticket";
+      const d=new Date(record.at);
+      const time=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+      return `<div class="used-ticket-mini">
+        <span class="used-icon">${ticketIcon()}</span>
+        <span class="used-name">${escapeHTML(name)}</span>
+        <time>${time}</time>
+        <b>USED</b>
+      </div>`;
+    }).join("");
+  }
+
+  function renderHistory(){
+    const root=document.getElementById("historyList");
+    root.innerHTML=state.history.length?state.history.slice(0,30).map(item=>{
+      const d=new Date(item.at);
+      return `<div class="history-item"><span>${escapeHTML(item.text)}</span><time>${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}</time></div>`;
+    }).join(""):`<div style="font-size:10px;color:var(--secondary-ink)">No activity yet.</div>`;
+  }
+
+  function render(){
+    const level=Math.floor(state.profile.totalExp/100)+1;
+    const within=state.profile.totalExp%100;
+    document.getElementById("levelValue").textContent=level;
+    document.getElementById("headerLevel").textContent=level;
+    document.getElementById("expWithin").textContent=within;
+    document.getElementById("totalExp").textContent=state.profile.totalExp;
+    document.getElementById("expBar").style.width=`${within}%`;
+    document.getElementById("syrupLevel").style.height=`${within}%`;
+    const {date,completed,carriedExp}=state.today;
+    const awards=Object.values(completed);
+    const dateLabel=document.getElementById("taskDate");
+    dateLabel.dateTime=date;
+    dateLabel.textContent=new Date(date+"T00:00:00").toLocaleDateString(undefined,
+      {weekday:"long",month:"short",day:"numeric"});
+    document.getElementById("todayExp").textContent=awards.reduce((sum,award)=>sum+award.exp,carriedExp);
+    const planned=visibleTasks();
+    const done=planned.filter(task=>Object.hasOwn(completed,task.id)).length;
+    document.getElementById("taskCount").textContent=`${done}/${planned.length}`;
+    document.getElementById("coinValue").textContent=state.profile.coins;
+    document.getElementById("headerCoins").textContent=state.profile.coins;
+    document.getElementById("rewardCoins").textContent=state.profile.coins;
+
+    renderTasks();
+    renderWallet();
+    renderShop();
+    renderUsedTickets();
+    renderHistory();
+  }
+
+  function switchView(name){
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    document.getElementById(`view-${name}`).classList.add("active");
+    document.querySelectorAll(".nav-btn[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
+  }
+
+  function toast(msg){
+    const el=document.getElementById("toast");
+    el.textContent=msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>el.classList.remove("show"),2200);
+  }
+
+  function escapeHTML(s){
+    return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  document.querySelectorAll(".nav-btn[data-view]").forEach(btn=>btn.addEventListener("click",()=>switchView(btn.dataset.view)));
+  document.getElementById("addTask").addEventListener("click",()=>openTaskEditor());
+  document.getElementById("taskForm").addEventListener("submit",submitTask);
+  document.getElementById("taskRepeat").addEventListener("change",updateWeekdays);
+  document.getElementById("taskCancel").addEventListener("click",()=>document.getElementById("taskDialog").close());
+  document.getElementById("addTicket").addEventListener("click",()=>openTicketEditor());
+  document.getElementById("cancelTicketEdit").addEventListener("click",()=>document.getElementById("ticketEditor").close());
+  document.getElementById("ticketForm").addEventListener("submit",event=>{
+    event.preventDefault();
+    const name=document.getElementById("ticketName").value.trim();
+    const price=document.getElementById("ticketPrice").valueAsNumber;
+    if(saveTicket(name,price)){
+      closeTicketEditor(editingTicketId);
+    }else{
+      const error=document.getElementById("ticketEditorError");
+      error.textContent=name?"Could not save this ticket. Check the price and try again.":"Enter a ticket name.";
+      error.hidden=false;
+    }
+  });
+  document.getElementById("deleteTicket").addEventListener("click",()=>{
+    const ticket=state.tickets.find(item=>item.id===editingTicketId&&!item.archived);
+    if(!ticket) return;
+    requestDeletion(
+      "Remove ticket from the shop?",
+      `“${ticket.name}” will disappear from the shop. Owned tickets can still be used.`,
+      ()=>archiveTicket(ticket.id),
+      ()=>closeTicketEditor(null)
+    );
+  });
+  document.getElementById("confirmDeletion").addEventListener("click",confirmDeletion);
+  document.getElementById("cancelDeletion").addEventListener("click",()=>deleteDialog.close());
+  deleteDialog.addEventListener("close",()=>{
+    if(!deleteDialog.open) pendingDeletion=null;
+  });
+  document.getElementById("exportButton").addEventListener("click",exportJSON);
+  document.getElementById("importInput").addEventListener("change",e=>{
+    const file=e.target.files?.[0];
+    if(file) importJSON(file);
+    e.target.value="";
+  });
+  document.getElementById("devCoins").addEventListener("click",()=>{
+    if(!refreshDay()) return;
+    state.profile.coins+=50;
+    history("Test +50 C");
+    if(save()) toast("+50 coins");
+  });
+
+  document.getElementById("modalScrim").addEventListener("click",closeTicketModal);
+  document.getElementById("modalClose").addEventListener("click",closeTicketModal);
+  document.getElementById("modalCancel").addEventListener("click",closeTicketModal);
+  document.getElementById("modalConfirm").addEventListener("click",confirmTicketUse);
+  document.getElementById("purchaseScrim").addEventListener("click",closePurchaseModal);
+  document.getElementById("purchaseClose").addEventListener("click",closePurchaseModal);
+  document.getElementById("purchaseCancel").addEventListener("click",closePurchaseModal);
+  document.getElementById("purchaseConfirm").addEventListener("click",confirmPurchase);
+  document.addEventListener("keydown",e=>{
+    if(e.key!=="Escape") return;
+    if(document.getElementById("ticketModal").classList.contains("open")) closeTicketModal();
+    if(document.getElementById("purchaseModal").classList.contains("open")) closePurchaseModal();
+  });
+
+  const historyPanel=document.getElementById("historyPanel");
+  document.getElementById("historyToggle").addEventListener("click",()=>historyPanel.classList.toggle("open"));
+  document.getElementById("closeHistory").addEventListener("click",()=>historyPanel.classList.remove("open"));
+
+  document.addEventListener("click",e=>{
+    const target=e.target.closest("button,.task,.reward-card,.ticket-pile");
+    if(!target||target.disabled) return;
+    target.classList.remove("squish");
+    void target.offsetWidth;
+    target.classList.add("squish");
+    setTimeout(()=>target.classList.remove("squish"),300);
+  },true);
+
+  document.addEventListener("visibilitychange",()=>{
+    if(!document.hidden) checkDate();
+  });
+  window.addEventListener("focus",checkDate);
+  window.addEventListener("pageshow",checkDate);
+
+  render();
+  checkDate();
+})();
+</script>
+</body>
+</html>
