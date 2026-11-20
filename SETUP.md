@@ -54,3 +54,11 @@ Only use the publishable key. Never put a secret key or service-role key in the 
 ## Updating the app
 
 Replace `index.html` with the new version and commit to `main`. GitHub Actions redeploys it automatically. Cloud save data remains in Supabase and is not stored in the repository.
+
+## Daily edition
+
+1. Run `supabase/daily-schema.sql` in the same Supabase project's SQL Editor. The Daily edition uses its own table and does not migrate the original edition's save.
+2. In **Authentication → URL Configuration → Redirect URLs**, add the exact Daily URL, for example `https://m-shiki.github.io/milkglass-desk/daily.html`. Keep the original redirect for the original edition.
+3. On each device, open the Daily URL, use **Sign in to sync**, and open the emailed link with the same email address. The first device with existing browser data can seed an empty cloud save. If both copies have edits, use **Review conflict** to choose which save to keep. Export the browser copy first if you want to keep it separately.
+
+The Daily edition switches days at 06:00 JST. It keeps an offline browser copy and syncs automatically when connected and signed in.

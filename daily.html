@@ -984,6 +984,13 @@
     .delete-dialog p{line-height:1.45;overflow-wrap:anywhere}
     .delete-dialog .gel-btn{flex:0 1 auto;padding-inline:16px}
 
+    .cloud-controls{display:flex;flex-wrap:wrap;gap:6px}
+    .cloud-status{margin:8px 0;overflow-wrap:anywhere;font-size:12px;color:var(--secondary-ink)}
+    .cloud-dialog h2{margin:0;font-size:19px}
+    .cloud-dialog form{display:grid;gap:10px}
+    .cloud-dialog input{width:100%;padding:8px;border:1px solid #aaa;border-radius:8px;font-size:16px}
+    .cloud-dialog p{font-size:13px;overflow-wrap:anywhere}
+    .cloud-dialog .task-form-actions{flex-wrap:wrap}
   </style>
 </head>
 <body>
@@ -1065,6 +1072,13 @@
 
         <section class="panel save-card">
           <span class="label">Save Data</span>
+          <p class="cloud-status" id="cloudStatus" role="status">Saved on this browser</p>
+          <div class="cloud-controls">
+            <button class="mini-btn" id="cloudSignIn" type="button">Sign in to sync</button>
+            <button class="mini-btn" id="cloudSync" type="button" hidden>Sync now</button>
+            <button class="mini-btn" id="cloudSignOut" type="button" hidden>Sign out</button>
+            <button class="mini-btn" id="cloudReview" type="button" hidden>Review conflict</button>
+          </div>
           <div class="save-row">
             <button class="mini-btn" id="exportButton">Export</button>
             <label class="mini-btn">
@@ -1224,6 +1238,31 @@
   </div>
 </dialog>
 
+<dialog class="task-dialog cloud-dialog" id="cloudLoginDialog" aria-labelledby="cloudLoginTitle">
+  <form id="cloudLoginForm">
+    <h2 id="cloudLoginTitle">Sign in to sync</h2>
+    <label>Email <input id="cloudEmail" type="email" autocomplete="email" required autofocus></label>
+    <div class="task-form-actions">
+      <button class="mini-btn" id="closeCloudLogin" type="button">Close</button>
+      <button class="gel-btn" id="sendCloudLink" type="submit">Send sign-in link</button>
+    </div>
+    <p id="cloudLoginStatus" role="status" hidden></p>
+  </form>
+</dialog>
+
+<dialog class="task-dialog cloud-dialog" id="cloudConflictDialog" aria-labelledby="cloudConflictTitle">
+  <h2 id="cloudConflictTitle">Two saves have changed</h2>
+  <p id="cloudConflictMessage">Choose which save to keep. You can export the browser copy first.</p>
+  <div class="task-form-actions">
+    <button class="mini-btn" id="closeCloudConflict" type="button" autofocus>Close</button>
+    <button class="mini-btn" id="cloudExport" type="button">Export browser copy</button>
+    <button class="mini-btn" id="cloudKeepRemote" type="button">Use cloud save</button>
+    <button class="gel-btn" id="cloudKeepLocal" type="button">Use browser save</button>
+  </div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
 <script>
 (() => {
   "use strict";
@@ -1255,16 +1294,16 @@
     {id:"shopping500",name:"Shopping ¥500",price:250}
   ];
 
-  const todayKey = () => {
-    const d = new Date();
-    const local = new Date(d.getTime() - d.getTimezoneOffset()*60000);
-    return local.toISOString().slice(0,10);
-  };
+  const HOUR_MS = 60*60*1000;
+  const todayKey = (now=Date.now()) => new Date(now+(9-6)*HOUR_MS).toISOString().slice(0,10);
+  const nextDayStart = now => Date.parse(todayKey(now)+"T21:00:00Z");
+  const emptySync = () => ({revision:0,dirty:false});
 
   const freshState = () => ({
     schemaVersion:SCHEMA_VERSION,
     lastModified:new Date().toISOString(),
-    sync:{provider:null,status:"local",remoteRevision:null},
+    dayBoundary:"jst-06",
+    sync:emptySync(),
     profile:{totalExp:0,coins:0},
     tickets:DEFAULT_TICKETS.map(ticket=>({...ticket,archived:false})),
     wallet:{},
@@ -1273,7 +1312,9 @@
     history:[]
   });
 
-  let state = load();
+  let accountId=null;
+  let editVersion=0;
+  let state=load(STORAGE_KEY);
   let savedState = JSON.stringify(state);
   let toastTimer = null;
   let midnightTimer = null;
@@ -1292,7 +1333,7 @@
       lastModified:parsed.lastModified??base.lastModified,
       profile:{...base.profile,...parsed.profile},
       wallet:{...base.wallet,...parsed.wallet},
-      sync:{...base.sync,...parsed.sync},
+      sync:emptySync(),
       history:parsed.history===undefined?[]:parsed.history,
       today:{
         date:parsed.today.date===undefined?base.today.date:parsed.today.date,
@@ -1359,6 +1400,16 @@
       }
       normalized.tasks=parsed.tasks;
     }
+    // Until 06:00 JST, keep entries already logged today by the midnight-based edition.
+    if(parsed.dayBoundary!=="jst-06" && today.date>base.today.date &&
+      today.date===new Date(Date.now()+9*HOUR_MS).toISOString().slice(0,10)){
+      for(const task of normalized.tasks){
+        if(task.lastCompletedOn===today.date && Object.hasOwn(today.completed,task.id)){
+          task.lastCompletedOn=base.today.date;
+        }
+      }
+      today.date=base.today.date;
+    }
     return normalized;
   }
 
@@ -1405,21 +1456,35 @@
     return typeof value==="string" && Number.isFinite(Date.parse(value));
   }
 
-  function load(){
+  function load(key){
     try{
-      const raw=localStorage.getItem(STORAGE_KEY);
-      return raw?normalizeState(JSON.parse(raw)):freshState();
+      const raw=localStorage.getItem(key);
+      if(!raw) return freshState();
+      const parsed=JSON.parse(raw);
+      const next=normalizeState(parsed);
+      const revision=parsed.sync?.revision;
+      next.sync={revision:isPoints(revision)?revision:0,dirty:parsed.sync?.dirty===true};
+      // Existing local-only saves with activity can seed the first cloud save.
+      if(key===STORAGE_KEY && parsed.sync?.dirty===undefined){
+        next.sync.dirty=Boolean(next.history.length||next.tasks.length||
+          next.profile.totalExp||next.profile.coins||Object.keys(next.wallet).length||
+          JSON.stringify(next.tickets)!==JSON.stringify(freshState().tickets));
+      }
+      return next;
     }catch(error){
       console.error(error);
       return freshState();
     }
   }
 
-  function save(next=state){
-    next.lastModified=new Date().toISOString();
+  function save(next=state,edited=true){
+    if(edited){
+      next.lastModified=new Date().toISOString();
+      next.sync={revision:state.sync.revision,dirty:true};
+    }
     try{
       const serialized=JSON.stringify(next);
-      localStorage.setItem(STORAGE_KEY,serialized);
+      localStorage.setItem(cacheKey(),serialized);
       savedState=serialized;
     }catch(error){
       console.error(error);
@@ -1429,6 +1494,10 @@
       return false;
     }
     state=next;
+    if(edited){
+      editVersion++;
+      queueSync();
+    }
     render();
     return true;
   }
@@ -1448,19 +1517,15 @@
   function refreshDay(){
     if(state.today.date===todayKey()) return true;
     rollDay(state,freshState().today);
-    return save();
-  }
-
-  function scheduleMidnight(){
-    clearTimeout(midnightTimer);
-    const midnight=new Date();
-    midnight.setHours(24,0,0,0);
-    midnightTimer=setTimeout(checkDate,Math.max(0,midnight.getTime()-Date.now()));
+    return save(state,false);
   }
 
   function checkDate(){
     refreshDay();
-    scheduleMidnight();
+    clearTimeout(midnightTimer);
+    const now=Date.now();
+    midnightTimer=setTimeout(checkDate,Math.max(1,nextDayStart(now)-now));
+    queueSync();
   }
 
   function isDue(task,date){
@@ -1775,7 +1840,8 @@
 
   function exportJSON(){
     if(!refreshDay()) return;
-    const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+    const {sync,...payload}=state;
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");
     a.href=url;
@@ -1941,6 +2007,7 @@
   }
 
   function render(){
+    renderCloud();
     const level=Math.floor(state.profile.totalExp/100)+1;
     const within=state.profile.totalExp%100;
     document.getElementById("levelValue").textContent=level;
@@ -1987,6 +2054,199 @@
   function escapeHTML(s){
     return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
   }
+
+  const config=window.MILKGLASS_CONFIG;
+  let cloud=null;
+  try{
+    if(window.supabase && config?.supabaseUrl && config?.supabasePublishableKey){
+      cloud=window.supabase.createClient(config.supabaseUrl,config.supabasePublishableKey);
+    }
+  }catch(error){
+    console.error("Cloud configuration failed",error);
+  }
+
+  let syncTimer=null;
+  let syncing=false;
+  let conflict=null;
+  let syncError="";
+  let accountGeneration=0;
+  const cacheKey=()=>accountId?STORAGE_KEY+":"+accountId:STORAGE_KEY;
+
+  function renderCloud(){
+    document.getElementById("cloudStatus").textContent=syncError||
+      (conflict?"Two saves have changed. Review the conflict.":
+        !accountId?"Saved on this browser":
+        syncing?"Syncing…":state.sync.dirty?"Changes waiting to sync":"Cloud sync on");
+    document.getElementById("cloudSignIn").hidden=Boolean(accountId);
+    document.getElementById("cloudSync").hidden=!accountId;
+    document.getElementById("cloudSync").disabled=syncing||Boolean(conflict);
+    document.getElementById("cloudSignOut").hidden=!accountId;
+    document.getElementById("cloudReview").hidden=!conflict;
+  }
+
+  function queueSync(){
+    if(!accountId||!cloud||conflict) return;
+    clearTimeout(syncTimer);
+    syncTimer=setTimeout(()=>syncCloud(),350);
+  }
+
+  function applyCloud(row){
+    const next=normalizeState(row.payload);
+    rollDay(next,freshState().today);
+    next.sync={revision:Number(row.revision),dirty:false};
+    return save(next,false);
+  }
+
+  async function syncCloud(useBrowserSave=false){
+    if(!accountId||!cloud||syncing||(conflict&&!useBrowserSave)) return;
+    const userId=accountId;
+    const generation=accountGeneration;
+    const current=()=>generation===accountGeneration;
+    const resolvedRevision=useBrowserSave?Number(conflict?.revision):null;
+    syncing=true;
+    syncError="";
+    renderCloud();
+
+    try{
+      const {data:row,error}=await cloud.from("habit_daily_saves")
+        .select("revision,payload").eq("user_id",userId).maybeSingle();
+      if(!current()) return;
+      if(error) throw error;
+      const revision=Number(row?.revision??0);
+      if(!isPoints(revision)||(row&&revision===0)) throw Error("Invalid cloud revision");
+      if(row && revision!==state.sync.revision){
+        if(state.sync.dirty && revision!==resolvedRevision){
+          // Validate the remote payload before offering it as a recoverable save.
+          normalizeState(row.payload);
+          conflict=row;
+          return;
+        }
+        if(!state.sync.dirty){
+          if(!applyCloud(row)) throw Error("Could not cache cloud save");
+          return;
+        }
+      }
+      if(!state.sync.dirty) return;
+
+      if(!refreshDay()) throw Error("Could not save the current day");
+      const version=editVersion;
+      const {sync,...payload}=state;
+      const result=await cloud.rpc("save_daily_habit_state",{p_expected_revision:revision,p_payload:payload});
+      if(!current()) return;
+      if(result.error) throw result.error;
+      const written=Number(result.data);
+      if(written!==revision+1) throw Error("Invalid cloud write revision");
+      const next={...state,sync:{revision:written,dirty:version!==editVersion}};
+      if(!save(next,false)) throw Error("Could not cache cloud revision");
+      conflict=null;
+      document.getElementById("cloudConflictDialog").close();
+    }catch(error){
+      if(!current()) return;
+      console.error("Daily sync failed",error);
+      if(error.code==="40001"){
+        conflict=null;
+        document.getElementById("cloudConflictDialog").close();
+        queueSync();
+      }else{
+        syncError=["PGRST202","PGRST205","42P01","42883"].includes(error.code)?
+          "Cloud save is not set up yet. This browser still saves changes.":
+          "Sync failed. Your browser copy is available.";
+      }
+    }finally{
+      if(current()){
+        syncing=false;
+        renderCloud();
+      }
+    }
+  }
+
+  function changeAccount(session){
+    const nextId=session?.user?.id??null;
+    if(nextId===accountId) return;
+    const anonymousState=accountId?null:state;
+    accountGeneration++;
+    accountId=nextId;
+    conflict=null;
+    syncing=false;
+    syncError="";
+    document.getElementById("cloudConflictDialog").close();
+    document.getElementById("taskDialog").close();
+    document.getElementById("ticketEditor").close();
+    document.getElementById("deleteDialog").close();
+    state=load(cacheKey());
+    savedState=JSON.stringify(state);
+    if(accountId&&anonymousState?.sync.dirty&&!state.sync.revision&&!state.sync.dirty){
+      save({...anonymousState,sync:{revision:0,dirty:true}},false);
+    }
+    checkDate();
+    render();
+    queueSync();
+  }
+
+  async function initCloud(){
+    if(!cloud) return;
+    const {data,error}=await cloud.auth.getSession();
+    if(!error) changeAccount(data.session);
+    cloud.auth.onAuthStateChange((_event,session)=>setTimeout(()=>changeAccount(session),0));
+    setInterval(()=>{if(!document.hidden) queueSync();},12000);
+    window.addEventListener("online",queueSync);
+  }
+
+  document.getElementById("cloudSignIn").addEventListener("click",()=>{
+    document.getElementById("cloudLoginStatus").hidden=true;
+    document.getElementById("cloudLoginDialog").showModal();
+  });
+  document.getElementById("closeCloudLogin").addEventListener("click",()=>document.getElementById("cloudLoginDialog").close());
+  document.getElementById("cloudLoginForm").addEventListener("submit",async event=>{
+    event.preventDefault();
+    const status=document.getElementById("cloudLoginStatus");
+    const button=document.getElementById("sendCloudLink");
+    status.hidden=false;
+    if(!cloud){
+      status.textContent="Cloud sign-in is unavailable. Try again after reloading.";
+      return;
+    }
+    button.disabled=true;
+    status.textContent="Sending…";
+    try{
+      const email=document.getElementById("cloudEmail").value.trim();
+      const emailRedirectTo=new URL("./daily.html",window.location.href).href;
+      const {error}=await cloud.auth.signInWithOtp({email,options:{emailRedirectTo}});
+      if(error) throw error;
+      status.textContent="Open the sign-in link on this device. If the original edition opens, return to this page after signing in.";
+    }catch(error){
+      console.error("Cloud sign-in failed",error);
+      status.textContent="Could not send the link. Check the address and try again.";
+    }finally{
+      button.disabled=false;
+    }
+  });
+  document.getElementById("cloudSync").addEventListener("click",()=>syncCloud());
+  document.getElementById("cloudSignOut").addEventListener("click",async()=>{
+    if(!cloud||!accountId) return;
+    if(syncing){
+      toast("Wait for this sync to finish before signing out.");
+      return;
+    }
+    const {error}=await cloud.auth.signOut({scope:"local"});
+    if(error) toast("Could not sign out. Try again.");
+    else changeAccount(null);
+  });
+  document.getElementById("cloudReview").addEventListener("click",()=>{
+    if(conflict) document.getElementById("cloudConflictDialog").showModal();
+  });
+  document.getElementById("closeCloudConflict").addEventListener("click",()=>document.getElementById("cloudConflictDialog").close());
+  document.getElementById("cloudExport").addEventListener("click",exportJSON);
+  document.getElementById("cloudKeepRemote").addEventListener("click",()=>{
+    if(!conflict||syncing) return;
+    if(applyCloud(conflict)){
+      conflict=null;
+      document.getElementById("cloudConflictDialog").close();
+      renderCloud();
+      queueSync();
+    }
+  });
+  document.getElementById("cloudKeepLocal").addEventListener("click",()=>syncCloud(true));
 
   document.querySelectorAll(".nav-btn[data-view]").forEach(btn=>btn.addEventListener("click",()=>switchView(btn.dataset.view)));
   document.getElementById("addTask").addEventListener("click",()=>openTaskEditor());
@@ -2070,6 +2330,7 @@
 
   render();
   checkDate();
+  initCloud();
 })();
 </script>
 </body>
